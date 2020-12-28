@@ -1,16 +1,18 @@
-# Matterbridge API link for Vintage Story
+# Matterbridge API link for Vintage Story Server
 
+this mod is serverside **ONLY**
+and you need to run a matterbridge: [https://github.com/42wim/matterbridge](https://github.com/42wim/matterbridge)
 First of all.. you need to run a matterbridge: [https://github.com/42wim/matterbridge](https://github.com/42wim/matterbridge)
 and for this mod to connect the websocket to the api  [https://github.com/42wim/matterbridge/wiki/API](https://github.com/42wim/matterbridge/wiki/API) must be accessible
 
-matteridge allows for many complex chat brdige setups,
+matteridge allows for many complex chat brdige setups
 it is worthwile to read through their wiki: https://github.com/42wim/matterbridge/wiki
 
 ## configuration
 
 the mod will create a default config file in `ModConfig/matterbidge.json`
 
-
+with the following properties
 
 #### `string` Uri
 
@@ -167,7 +169,6 @@ inout = [
   "TEXT_ServerStop": "Server is shutting down. Goodbye!"
 }
 ```
-
 
 ## contributions
 
