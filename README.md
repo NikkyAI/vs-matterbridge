@@ -30,6 +30,10 @@ announces when the mod connects or when the server shuts down
 
 announces when players join or leave the server
 
+#### `bool` SendPlayerDeathEvents
+
+announces when players die
+
 #### `bool` SendStormNotification
 
 announces storm events
@@ -146,6 +150,7 @@ inout = [
   "Token": "5YZJgQwRb4nzMgLicMFn",
   "SendApiConnectEvents": true,
   "SendPlayerJoinLeaveEvents": true,
+  "SendPlayerDeathEvents": true,
   "SendStormNotification": true,
   "SendStormEarlyNotification": true,
   "ChannelMapping": [

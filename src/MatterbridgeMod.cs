@@ -7,24 +7,9 @@ using SuperSocket.ClientEngine;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Server;
-using Vintagestory.API.Util;
 using Vintagestory.GameContent;
 using WebSocket4Net;
 using Newtonsoft.Json;
-
-// [assembly: ModInfo(
-//     name: "Matterbridge API Connector",
-//     modID: "matterbridge",
-//     Description = "A matterbridge api connector for VS server",
-//     Website = "https://github.com/NikkyAI/vs-matterbridge",
-//     Authors = new[] {"Nikky"},
-//     Version = "0.0.1",
-//     RequiredOnClient = false,
-//     Side = "Server"
-// )]
-//
-// [assembly: ModDependency("game", "1.8.0")]
-// [assembly: ModDependency("survival", "")]
 
 namespace Matterbridge
 {
@@ -34,29 +19,35 @@ namespace Matterbridge
         private const string PLAYERDATA_TOTALPLAYTIMEKEY = "MATTERBRIDGE_TOTALPLAYTIME";
         private const string CONFIGNAME = "matterbridge.json";
 
-        private static ICoreServerAPI Api;
+        private static ICoreServerAPI? _api;
+        private ModConfig? _config;
+        private string? _generalGateway;
 
         private ICoreServerAPI api
         {
-            get => Api;
-            set => Api = value;
+            get => _api!;
+            set => _api = value;
+        }
+        
+        private ModConfig config { 
+            get => _config!;
+            set => _config = value; 
         }
 
-        private TemporalStormRunTimeData lastData;
-        private SystemTemporalStability temporalSystem;
+        private string generalGateway
+        {
+            get => _generalGateway!;
+            set => _generalGateway = value;
+        }
+
+        private TemporalStormRunTimeData? _lastData;
+        private SystemTemporalStability? _temporalSystem;
 
         private static readonly Dictionary<string, DateTime> connectTimeDict = new Dictionary<string, DateTime>();
 
-        private WebSocket websocket;
-        private bool reconnect_websocket = true;
-
-        private Random random = new Random();
-
-        private ModConfig config;
-
-        private string generalGateway;
-
-        private int connectErrrors = 0;
+        private WebSocket? _websocket;
+        private bool _reconnectWebsocket = true;
+        private int _connectErrrors = 0;
 
         public override void StartServerSide(ICoreServerAPI api)
         {
@@ -123,17 +114,13 @@ namespace Matterbridge
             this.api.Event.PlayerJoin += Event_PlayerJoin;
             this.api.Event.PlayerDisconnect += Event_PlayerDisconnect;
 
-
-            // if (this.config.SendServerMessages)
-            // {
             this.api.Event.ServerRunPhase(EnumServerRunPhase.GameReady, Event_ServerStartup);
             this.api.Event.ServerRunPhase(EnumServerRunPhase.Shutdown, Event_ServerShutdown);
-            // }
 
             this.api.Event.PlayerDeath += Event_PlayerDeath;
         }
 
-        private void Event_PlayerDeath(IServerPlayer byPlayer, DamageSource damageSource)
+        private void Event_PlayerDeath(IServerPlayer byPlayer, DamageSource? damageSource)
         {
             // var deathMessage = (byPlayer?.PlayerName ?? "Unknown player") + " ";
             var deathMessage = "";
@@ -141,130 +128,66 @@ namespace Matterbridge
                 deathMessage += "was killed by the unknown.";
             else
             {
-                switch (damageSource.Type)
+                deathMessage += damageSource.Type switch
                 {
-                    case EnumDamageType.Gravity:
-                        deathMessage += "smashed into the ground";
-                        break;
-                    case EnumDamageType.Fire:
-                        deathMessage += "burned to death";
-                        break;
-                    case EnumDamageType.Crushing:
-                    case EnumDamageType.BluntAttack:
-                        deathMessage += "was crushed";
-                        break;
-                    case EnumDamageType.SlashingAttack:
-                        deathMessage += "was sliced open";
-                        break;
-                    case EnumDamageType.PiercingAttack:
-                        deathMessage += "was pierced through";
-                        break;
-                    case EnumDamageType.Suffocation:
-                        deathMessage += "suffocated to death";
-                        break;
-                    case EnumDamageType.Heal:
-                        deathMessage += "was somehow *healed* to death";
-                        break;
-                    case EnumDamageType.Poison:
-                        deathMessage += "was poisoned";
-                        break;
-                    case EnumDamageType.Hunger:
-                        deathMessage += "starved to death";
-                        break;
-                    default:
-                        deathMessage += "was killed";
-                        break;
-                }
+                    EnumDamageType.Gravity => "smashed into the ground",
+                    EnumDamageType.Fire => "burned to death",
+                    EnumDamageType.Crushing => "was crushed",
+                    EnumDamageType.BluntAttack => "was crushed",
+                    EnumDamageType.SlashingAttack => "was sliced open",
+                    EnumDamageType.PiercingAttack => "was pierced through",
+                    EnumDamageType.Suffocation => "suffocated to death",
+                    EnumDamageType.Heal => "was somehow *healed* to death",
+                    EnumDamageType.Poison => "was poisoned",
+                    EnumDamageType.Hunger => "starved to death",
+                    EnumDamageType.Frost => "froze to death",
+                    _ => "was killed"
+                };
 
                 deathMessage += " ";
 
-                switch (damageSource.Source)
+                deathMessage += damageSource.Source switch
                 {
-                    case EnumDamageSource.Block:
-                        deathMessage += "by a block.";
-                        break;
-                    case EnumDamageSource.Player:
-                        deathMessage += "when they failed at PVP.";
-                        break;
-                    case EnumDamageSource.Fall:
-                        deathMessage += "when they fell to their doom.";
-                        break;
-                    case EnumDamageSource.Drown:
-                        deathMessage += "when they tried to breath in water.";
-                        break;
-                    case EnumDamageSource.Revive:
-                        deathMessage += "just as they respawned.";
-                        break;
-                    case EnumDamageSource.Void:
-                        deathMessage += "when they fell screaming into the abyss.";
-                        break;
-                    case EnumDamageSource.Suicide:
-                        deathMessage += "when they killed themselves.";
-                        break;
-                    case EnumDamageSource.Internal:
-                        deathMessage += "when they took damage from the inside...";
-                        break;
-                    case EnumDamageSource.Entity:
-                        switch (damageSource.SourceEntity.Code.Path)
-                        {
-                            case "wolf-male":
-                            case "wolf-female":
-                                deathMessage += "and eaten by a wolf.";
-                                break;
-                            case "pig-wild-male":
-                                deathMessage += "by a boar.";
-                                break;
-                            case "pig-wild-female":
-                                deathMessage += "by a sow.";
-                                break;
-                            case "sheep-bighorn-female":
-                            case "sheep-bighorn-male":
-                                deathMessage += "by a sheep.";
-                                break;
-                            case "chicken-rooster":
-                                deathMessage += "by a... chicken.";
-                                break;
-                            case "locust":
-                                deathMessage += "by a locust.";
-                                break;
-                            case "drifter":
-                                deathMessage += "by a drifter.";
-                                break;
-                            case "beemob":
-                                deathMessage += "by a swarm of bees.";
-                                break;
-                            default:
-                                deathMessage += "by a monster.";
-                                break;
-                        }
-
-                        break;
-                    case EnumDamageSource.Explosion:
-                        deathMessage += "when they stood by a bomb.";
-                        break;
-                    case EnumDamageSource.Machine:
-                        deathMessage += "when they got their hands stuck in a machine.";
-                        break;
-                    case EnumDamageSource.Unknown:
-                        deathMessage += "when they encountered the unknown.";
-                        break;
-                    case EnumDamageSource.Weather:
-                        deathMessage += "when the weather itself suddenly struck.";
-                        break;
-                    default:
-                        deathMessage += "by the unknown.";
-                        break;
-                }
+                    EnumDamageSource.Block => "by a block.",
+                    EnumDamageSource.Player => "when they failed at PVP.",
+                    EnumDamageSource.Fall => "when they fell to their doom.",
+                    EnumDamageSource.Drown => "when they tried to breath in water.",
+                    EnumDamageSource.Revive => "just as they respawned.",
+                    EnumDamageSource.Void => "when they fell screaming into the abyss.",
+                    EnumDamageSource.Suicide => "when they killed themselves.",
+                    EnumDamageSource.Internal => "when they took damage from the inside...",
+                    EnumDamageSource.Entity => damageSource.SourceEntity.Code.Path switch
+                    {
+                        "wolf-male" => "and eaten by a wolf.",
+                        "wolf-female" => "and eaten by a wolf.",
+                        "pig-wild-male" => "by a boar.",
+                        "pig-wild-female" => "by a sow.",
+                        "sheep-bighorn-female" => "by a sheep.",
+                        "sheep-bighorn-male" => "by a sheep.",
+                        "chicken-rooster" => "by a... chicken.",
+                        "locust" => "by a locust.",
+                        "drifter" => "by a drifter.",
+                        "beemob" => "by a swarm of bees.",
+                        _ => "by a monster."
+                    },
+                    EnumDamageSource.Explosion => "when they stood by a bomb.",
+                    EnumDamageSource.Machine => "when they got their hands stuck in a machine.",
+                    EnumDamageSource.Unknown => "when they encountered the unknown.",
+                    EnumDamageSource.Weather => "when the weather itself suddenly struck.",
+                    _ => "by the unknown."
+                };
             }
 
-            //TODO if config.sendDeathEvents
-            Send_Message(
-                username: byPlayer.PlayerName,
-                text: deathMessage,
-                @event: ApiMessage.EventUserAction,
-                account: byPlayer.PlayerUID,
-                gateway: generalGateway
-            );
+            if (config.SendPlayerDeathEvents)
+            {
+                Send_Message(
+                    username: byPlayer.PlayerName,
+                    text: deathMessage,
+                    @event: ApiMessage.EventUserAction,
+                    account: byPlayer.PlayerUID,
+                    gateway: generalGateway
+                );
+            }
         }
 
         private void Event_ServerStartup()
@@ -284,8 +207,8 @@ namespace Matterbridge
                 );
             }
 
-            reconnect_websocket = false;
-            websocket.Close();
+            _reconnectWebsocket = false;
+            _websocket?.Close();
         }
 
         private void Event_PlayerDisconnect(IServerPlayer byPlayer)
@@ -325,7 +248,6 @@ namespace Matterbridge
             connectTimeDict.Add(byPlayer.PlayerUID, DateTime.UtcNow);
             foreach (var entry in config.ChannelMapping)
             {
-                var groupName = entry.groupName;
                 var group = Get_or_Create_Group(entry.groupName);
 
                 AddPlayerToGroup(byPlayer, group);
@@ -349,58 +271,58 @@ namespace Matterbridge
         {
             if ( /*this.config.SendStormNotification &&*/ api.World.Config.GetString("temporalStorms") != "off")
             {
-                temporalSystem = api.ModLoader.GetModSystem<SystemTemporalStability>();
-                api.Event.RegisterGameTickListener(onTempStormTick, 5000);
+                _temporalSystem = api.ModLoader.GetModSystem<SystemTemporalStability>();
+                api.Event.RegisterGameTickListener(OnTempStormTick, 5000);
             }
         }
 
-        private void onTempStormTick(float t1)
+        private void OnTempStormTick(float t1)
         {
-            var data = this.temporalSystem.StormData;
+            if (_temporalSystem == null)
+            {
+                api.Logger.Error("temporalSystem not initialized yet");
+                return;
+            }
 
-            if (lastData?.stormDayNotify > 1 && data.stormDayNotify == 1 && this.config.SendStormEarlyNotification)
+            var data = _temporalSystem.StormData;
+            
+            api.Logger.Debug($"storm day {data.stormDayNotify} {data.nextStormStrength}");
+            
+            if (_lastData?.stormDayNotify > 1 && data.stormDayNotify == 1 && config.SendStormEarlyNotification)
             {
                 Send_Message(
                     username: "system",
-                    text: config.TEXT_StormEarlyWarning.Replace("{strength}", Enum.GetName(typeof(EnumTempStormStrength), data.nextStormStrength).ToLower()),
+                    text: config.TEXT_StormEarlyWarning.Replace("{strength}",data.nextStormStrength.ToString().ToLower()),
                     gateway: generalGateway
                 );
             }
 
-            if (lastData?.stormDayNotify == 1 && data.stormDayNotify == 0)
+            if (_lastData?.stormDayNotify == 1 && data.stormDayNotify == 0)
             {
                 Send_Message(
                     username: "system",
-                    text: config.TEXT_StormBegin.Replace("{strength}", Enum.GetName(typeof(EnumTempStormStrength), data.nextStormStrength).ToLower()),
+                    text: config.TEXT_StormBegin.Replace("{strength}", data.nextStormStrength.ToString().ToLower()),
                     gateway: generalGateway
                 );
             }
 
             //double activeDaysLeft = data.stormActiveTotalDays - api.World.Calendar.TotalDays;
-            if (lastData?.stormDayNotify == 0 && data.stormDayNotify == -1)
+            if (_lastData?.stormDayNotify == 0 && data.stormDayNotify != 0)
             {
                 Send_Message(
                     username: "system",
-                    text: config.TEXT_StormEnd.Replace("{strength}", Enum.GetName(typeof(EnumTempStormStrength), data.nextStormStrength).ToLower()),
+                    text: config.TEXT_StormEnd.Replace("{strength}", data.nextStormStrength.ToString().ToLower()),
                     gateway: generalGateway
                 );
             }
 
-            lastData = JsonConvert.DeserializeObject<TemporalStormRunTimeData>(JsonConvert.SerializeObject(data));
+            _lastData = JsonConvert.DeserializeObject<TemporalStormRunTimeData>(JsonConvert.SerializeObject(data));
         }
 
         private void Event_PlayerChat(IServerPlayer byPlayer, int channelId, ref string message, ref string data,
             Vintagestory.API.Datastructures.BoolRef consumed)
         {
-            PlayerGroup group;
-            if (channelId == GlobalConstants.GeneralChatGroup)
-            {
-                group = api.Groups.GetPlayerGroupByName("");
-            }
-            else
-            {
-                group = api.Groups.PlayerGroupsById[channelId];
-            }
+            PlayerGroup group = channelId == GlobalConstants.GeneralChatGroup ? api.Groups.GetPlayerGroupByName("") : api.Groups.PlayerGroupsById[channelId];
 
             api.Logger.Debug("chat: {0}", message);
             api.Logger.Debug($"group: {group.Uid} {group.Name}");
@@ -435,15 +357,15 @@ namespace Matterbridge
                     customHeaderItems.Add(new KeyValuePair<string, string>("Authorization", $"Bearer {config.Token}"));
                 }
 
-                websocket = new WebSocket(
+                _websocket = new WebSocket(
                     uri: config.Uri,
                     customHeaderItems: customHeaderItems
                 );
-                websocket.Opened += new EventHandler(websocket_Opened);
-                websocket.Error += new EventHandler<ErrorEventArgs>(websocket_Error);
-                websocket.Closed += new EventHandler(websocket_Closed);
-                websocket.MessageReceived += new EventHandler<MessageReceivedEventArgs>(websocket_MessageReceived);
-                websocket.Open();
+                _websocket.Opened += websocket_Opened;
+                _websocket.Error += websocket_Error;
+                _websocket.Closed += websocket_Closed;
+                _websocket.MessageReceived += websocket_MessageReceived;
+                _websocket.Open();
 
                 api.Logger.Debug("started websocket");
             }
@@ -455,7 +377,7 @@ namespace Matterbridge
 
         private void websocket_Opened(object sender, EventArgs e)
         {
-            connectErrrors = 0;
+            _connectErrrors = 0;
             api.Logger.Debug("websocket_Opened");
             api.Logger.Debug($"sender: {sender}");
             //TODO: send `vs bridge connected`
@@ -464,8 +386,8 @@ namespace Matterbridge
 
         private void websocket_Error(object sender, ErrorEventArgs errorEventArgs)
         {
-            connectErrrors++;
-            api.Logger.Error($"connect error: {connectErrrors}");
+            _connectErrrors++;
+            api.Logger.Error($"connect error: {_connectErrrors}");
             api.Logger.Error($"websocket_Error: {errorEventArgs.Exception}");
         }
 
@@ -473,14 +395,14 @@ namespace Matterbridge
         {
             api.Logger.Debug("websocket_Closed");
 
-            if (reconnect_websocket && connectErrrors < 10)
+            if (_reconnectWebsocket && _connectErrrors < 10)
             {
                 Thread.Sleep(100);
                 Connect_Websocket();
             }
             else
             {
-                api.Logger.Error($"will not try to reconnect after {connectErrrors} failed connection attempts");
+                api.Logger.Error($"will not try to reconnect after {_connectErrrors} failed connection attempts");
             }
         }
 
@@ -551,6 +473,8 @@ namespace Matterbridge
 
         private void websocket_MessageReceived(object sender, MessageReceivedEventArgs eventArgs)
         {
+
+            
             var text = eventArgs.Message;
             api.Logger.VerboseDebug("text: {0}", text);
 
@@ -635,6 +559,13 @@ namespace Matterbridge
 
         private void Send_Message(string username, string text, string gateway, string @event = "", string account = "")
         {
+
+            if (_websocket == null)
+            {
+                api.Logger.Error("websocket not initialized yet");
+                return;
+            }
+            
             var message = new ApiMessage(
                 text: text,
                 gateway: gateway,
@@ -647,9 +578,9 @@ namespace Matterbridge
                 protocol: "vs"
             );
 
-            var message_text = JsonConvert.SerializeObject(message);
-            api.Logger.Debug("sending: {0}", message_text);
-            websocket.Send(message_text);
+            var messageText = JsonConvert.SerializeObject(message);
+            api.Logger.Debug("sending: {0}", messageText);
+            _websocket.Send(messageText);
         }
     }
 }

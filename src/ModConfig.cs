@@ -10,6 +10,7 @@ namespace Matterbridge
 
         public bool SendApiConnectEvents = true;
         public bool SendPlayerJoinLeaveEvents = true;
+        public bool SendPlayerDeathEvents = true;
         public bool SendStormNotification = true;
         public bool SendStormEarlyNotification = true;
         // public string Gateway = "";
