@@ -23,7 +23,7 @@ jobs:
           ls -la bin/
           tar -xf bin/vs_server.tar.gz -C bin/vs_server/
           ls -la bin/vs_server/
-          echo "VINTAGESTORY=bin/vs_server" >> $GITHUB_ENV
+          echo "VINTAGE_STORY=bin/vs_server" >> $GITHUB_ENV
       - run: dotnet build
       - name: Set enviroment for github-release
         run: |
