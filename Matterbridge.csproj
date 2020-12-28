@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFramework>net452</TargetFramework>
+	</PropertyGroup>
+	
+	<ItemGroup>
+		<Reference Include="VintagestoryAPI">
+			<HintPath>$(VINTAGE_STORY)/VintagestoryAPI.dll</HintPath>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="VSSurvivalMod">
+			<HintPath>$(VINTAGE_STORY)/Mods/VSSurvivalMod.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+<!--
+		<Reference Include="VSEssentials">
+			<HintPath>$(VINTAGE_STORY)/Mods/VSEssentials.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="VSCreativeMod">
+			<HintPath>$(VINTAGE_STORY)/Mods/VSCreativeMod.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+-->
+	</ItemGroup>
+	
+	<ItemGroup>
+	  	<PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+		<PackageReference Include="WebSocket4Net" Version="0.15.2" />
+	</ItemGroup>
+
+	<ItemGroup>
+<!--		<None Include="src/**" CopyToOutputDirectory="PreserveNewest" />-->
+		<None Include="assets/*" CopyToOutputDirectory="PreserveNewest" />
+		<None Include="modinfo.json" CopyToOutputDirectory="PreserveNewest" />
+		<None Include="modicon.png" CopyToOutputDirectory="PreserveNewest" />
+	</ItemGroup>
+
+	<Target Name="Package" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Debug'">
+		<ZipDirectory DestinationFile="bin/$(TargetName).zip" SourceDirectory="$(TargetDir)" Overwrite="true" />
+	</Target>
+	
+</Project>
