@@ -20,7 +20,9 @@ jobs:
           mkdir bin
           mkdir bin/vs_server
           wget https://cdn.vintagestory.at/gamefiles/stable/vs_server_1.14.2.tar.gz -O bin/vs_server.tar.gz
-          tar -xf bin/vs_server.tar.gz -C bin/vs_server
+          ls -la bin/
+          tar -xf bin/vs_server.tar.gz -C bin/vs_server/
+          ls -la bin/vs_server/
           echo "VINTAGESTORY=bin/vs_server" >> $GITHUB_ENV
       - run: dotnet build
       - name: Set enviroment for github-release
