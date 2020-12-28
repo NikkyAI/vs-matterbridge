@@ -14,21 +14,19 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-dotnet@v1
         with:
-          dotnet-version: '5.0.x' # SDK Version to use; x will use the latest version of the 3.1 channel
+          dotnet-version: '5.0.x' # SDK Version to use; x will use the latest version of the 5.0.x channel
       - name: setup vintage story dependencies
         run: |
           mkdir bin
           mkdir bin/vs_server
-          wget https://cdn.vintagestory.at/gamefiles/stable/vs_server_1.14.2.tar.gz -O bin/vs_server.tar.gz
-          ls -la bin/
+          wget https://cdn.vintagestory.at/gamefiles/stable/vs_server_1.14.2.tar.gz --quiet -O bin/vs_server.tar.gz
           tar -xf bin/vs_server.tar.gz -C bin/vs_server/
-          ls -la bin/vs_server/
           echo "VINTAGE_STORY=bin/vs_server" >> $GITHUB_ENV
       - run: dotnet build
       - name: Set enviroment for github-release
         run: |
           echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
-          echo "VERSION=$(cat modinfo.json | jq .version)" >> $GITHUB_ENV
+          echo "VERSION=$(cat modinfo.json | jq -r .version)" >> $GITHUB_ENV
       - name: Set enviroment RELEASE_TAG
         run: |
           echo "RELEASE_TAG=snapshot/${{ env.VERSION }}-${{ env.BRANCH }}-$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
