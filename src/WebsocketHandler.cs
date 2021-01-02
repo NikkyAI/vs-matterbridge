@@ -14,15 +14,17 @@ namespace Matterbridge
     internal class WebsocketHandler
     {
         private readonly ICoreServerAPI api;
+        private readonly Mod Mod;
         private readonly ModConfig config;
 
         private WebSocket? _websocket;
         private bool _reconnectWebsocket = true;
         private int _connectErrrors = 0;
 
-        public WebsocketHandler(ICoreServerAPI api, ModConfig config)
+        public WebsocketHandler(ICoreServerAPI api, Mod Mod, ModConfig config)
         {
             this.api = api;
+            this.Mod = Mod;
             this.config = config;
         }
 
@@ -48,11 +50,11 @@ namespace Matterbridge
                 _websocket.MessageReceived += websocket_MessageReceived;
                 _websocket.Open();
 
-                api.Logger.Debug("started websocket");
+                Mod.Logger.Debug("started websocket");
             }
             catch (Exception e)
             {
-                api.Logger.Error("error connecting to websocket: {0} {1}", e, e.StackTrace);
+                Mod.Logger.Error("error connecting to websocket: {0} {1}", e, e.StackTrace);
             }
         }
 
@@ -75,23 +77,23 @@ namespace Matterbridge
         private void websocket_Opened(object sender, EventArgs e)
         {
             _connectErrrors = 0;
-            api.Logger.Debug("websocket opened");
+            Mod.Logger.Debug("websocket opened");
         }
 
         private void websocket_Error(object sender, ErrorEventArgs errorEventArgs)
         {
             _connectErrrors++;
-            api.Logger.Error($"connect errors: {_connectErrrors}");
-            api.Logger.Error($"websocket_Error: {errorEventArgs.Exception}");
+            Mod.Logger.Error($"connect errors: {_connectErrrors}");
+            Mod.Logger.Error($"websocket_Error: {errorEventArgs.Exception}");
         }
 
         private void websocket_Closed(object sender, EventArgs eventArgs)
         {
-            api.Logger.Debug("websocket closed");
+            Mod.Logger.Debug("websocket closed");
 
             if (api.Server.IsShuttingDown)
             {
-                api.Logger.Debug($"will not try to reconnect during shutdown");
+                Mod.Logger.Debug($"will not try to reconnect during shutdown");
                 return;
             }
 
@@ -104,29 +106,29 @@ namespace Matterbridge
                 }
                 else
                 {
-                    api.Logger.Error($"will not try to reconnect after {_connectErrrors} failed connection attempts");
+                    Mod.Logger.Error($"will not try to reconnect after {_connectErrrors} failed connection attempts");
                 }
             }
             else
             {
-                api.Logger.Debug("will not try to reconnect");
+                Mod.Logger.Debug("will not try to reconnect");
             }
         }
 
         private void websocket_MessageReceived(object sender, MessageReceivedEventArgs eventArgs)
         {
             var text = eventArgs.Message;
-            api.Logger.VerboseDebug("text: {0}", text);
+            Mod.Logger.VerboseDebug("text: {0}", text);
 
             var message = JsonConvert.DeserializeObject<ApiMessage>(text);
-            api.Logger.Debug("message: {0}", message);
+            Mod.Logger.Debug("message: {0}", message);
 
             if (message.gateway == "")
             {
                 switch (message.@event)
                 {
                     case ApiMessage.EventAPIConnected:
-                        api.Logger.Chat("api connected");
+                        Mod.Logger.Chat("api connected");
 
                         if (config.SendApiConnectEvents)
                         {
@@ -154,7 +156,7 @@ namespace Matterbridge
                 var mappingEntry = config.ChannelMapping.FirstOrDefault(entry => entry.gateway == message.gateway);
                 if (mappingEntry == null)
                 {
-                    api.Logger.Debug("no group found for channel {0}, skipping message", message.channel);
+                    Mod.Logger.Debug("no group found for channel {0}, skipping message", message.channel);
                     return;
                 }
 
@@ -193,7 +195,7 @@ namespace Matterbridge
                 }
                 default:
                 {
-                    api.Logger.Error("unhandled event type {0}", message.@event);
+                    Mod.Logger.Error("unhandled event type {0}", message.@event);
                     break;
                 }
             }
@@ -209,7 +211,7 @@ namespace Matterbridge
         {
             if (_websocket == null)
             {
-                api.Logger.Error("websocket not initialized yet");
+                Mod.Logger.Error("websocket not initialized yet");
                 return;
             }
 
@@ -226,7 +228,7 @@ namespace Matterbridge
             );
 
             var messageText = JsonConvert.SerializeObject(message);
-            api.Logger.Debug("sending: {0}", messageText);
+            Mod.Logger.Debug("sending: {0}", messageText);
             _websocket.Send(messageText);
         }
     }

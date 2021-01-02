@@ -34,6 +34,7 @@ namespace Matterbridge
             get => _config!;
             set => _config = value;
         }
+
         private WebsocketHandler websocketHandler
         {
             get => _websocketHandler!;
@@ -55,13 +56,13 @@ namespace Matterbridge
             }
             catch (Exception e)
             {
-                api.Logger.Error("Failed to load mod config! {0}", e);
+                Mod.Logger.Error("Failed to load mod config! {0}", e);
                 return;
             }
 
             if (this.config == null)
             {
-                api.Logger.Notification($"non-existant modconfig at 'ModConfig/{CONFIGNAME}', creating default...");
+                Mod.Logger.Notification($"non-existant modconfig at 'ModConfig/{CONFIGNAME}', creating default...");
                 config = new ModConfig();
             }
 
@@ -73,7 +74,7 @@ namespace Matterbridge
                 {
                     if (entry.groupName == otherEntry.groupName && entry.gateway != otherEntry.gateway)
                     {
-                        api.Logger.Error("inconsistent channel mapping for group {0} to gateways {1} {2}",
+                        Mod.Logger.Error("inconsistent channel mapping for group {0} to gateways {1} {2}",
                             entry.groupName,
                             entry.gateway, otherEntry.gateway);
                         return;
@@ -81,14 +82,14 @@ namespace Matterbridge
 
                     if (entry.groupName != otherEntry.groupName && entry.gateway == otherEntry.gateway)
                     {
-                        api.Logger.Error("inconsistent channel mapping for gateway {0} to groups {1} {2}",
+                        Mod.Logger.Error("inconsistent channel mapping for gateway {0} to groups {1} {2}",
                             entry.gateway, entry.groupName, otherEntry.groupName);
                         return;
                     }
                 }
             }
 
-            websocketHandler = new WebsocketHandler(api, config);
+            websocketHandler = new WebsocketHandler(api, Mod, config);
 
             api.RegisterCommand(
                 command: "me",
@@ -119,7 +120,7 @@ namespace Matterbridge
         {
             var message = args.PopAll();
 
-            api.Logger.Debug($"groupId: {groupid}");
+            Mod.Logger.Debug($"groupId: {groupid}");
             string gateway;
             if (groupid == GlobalConstants.GeneralChatGroup)
             {
@@ -131,7 +132,7 @@ namespace Matterbridge
                 var entry = config.ChannelMapping.FirstOrDefault(e => e.groupName == group.Name);
                 if (entry == null)
                 {
-                    api.Logger.Debug("no gateway found for group {0}, skipping message", group.Name);
+                    Mod.Logger.Debug("no gateway found for group {0}, skipping message", group.Name);
                     return;
                 }
 
@@ -371,7 +372,7 @@ namespace Matterbridge
         {
             if (_temporalSystem == null)
             {
-                api.Logger.Error("temporalSystem not initialized yet");
+                Mod.Logger.Error("temporalSystem not initialized yet");
                 return;
             }
 
@@ -420,21 +421,21 @@ namespace Matterbridge
             {
                 PlayerGroup group = api.Groups.PlayerGroupsById[channelId];
                 
-                api.Logger.Debug($"group: {group.Uid} {group.Name}");
+                Mod.Logger.Debug($"group: {group.Uid} {group.Name}");
 
                 // look up gateway for group name
                 gateway = config.ChannelMapping.First(entry => entry.groupName == group.Name).gateway;
             }
             
-            api.Logger.Debug("chat: {0}", message);
+            Mod.Logger.Debug("chat: {0}", message);
 
             var foundText = new Regex(@".*?> (.+)$").Match(message);
             if (!foundText.Success)
                 return;
 
-            api.Logger.Debug($"message: {message}");
-            api.Logger.Debug($"data: {data}");
-            api.Logger.Chat($"**{byPlayer.PlayerName}**: {foundText.Groups[1].Value}");
+            Mod.Logger.Debug($"message: {message}");
+            Mod.Logger.Debug($"data: {data}");
+            Mod.Logger.Chat($"**{byPlayer.PlayerName}**: {foundText.Groups[1].Value}");
 
             websocketHandler.SendMessage(
                 username: byPlayer.PlayerName,
