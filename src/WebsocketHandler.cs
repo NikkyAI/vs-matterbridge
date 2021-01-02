@@ -13,19 +13,25 @@ namespace Matterbridge
 {
     internal class WebsocketHandler
     {
-        private readonly ICoreServerAPI api;
-        private readonly Mod Mod;
-        private readonly ModConfig config;
+        private readonly ICoreServerAPI _api;
+        private readonly Mod _mod;
+        private readonly ModConfig _config;
 
+        // ReSharper disable ConvertToAutoProperty
+        private ICoreServerAPI Api => _api;
+        private Mod Mod => _mod;
+        private ModConfig Config => _config!;
+        // ReSharper restore ConvertToAutoProperty
+        
         private WebSocket? _websocket;
         private bool _reconnectWebsocket = true;
         private int _connectErrrors = 0;
 
-        public WebsocketHandler(ICoreServerAPI api, Mod Mod, ModConfig config)
+        public WebsocketHandler(ICoreServerAPI api, Mod mod, ModConfig config)
         {
-            this.api = api;
-            this.Mod = Mod;
-            this.config = config;
+            this._api = api;
+            this._mod = mod;
+            this._config = config;
         }
 
         public void Connect()
@@ -33,13 +39,13 @@ namespace Matterbridge
             try
             {
                 var customHeaderItems = new List<KeyValuePair<string, string>>();
-                if (!string.IsNullOrEmpty(config.Token))
+                if (!string.IsNullOrEmpty(Config.Token))
                 {
-                    customHeaderItems.Add(new KeyValuePair<string, string>("Authorization", $"Bearer {config.Token}"));
+                    customHeaderItems.Add(new KeyValuePair<string, string>("Authorization", $"Bearer {Config.Token}"));
                 }
 
                 _websocket = new WebSocket(
-                    uri: config.Uri,
+                    uri: Config.Uri,
                     customHeaderItems: customHeaderItems
                 );
                 _websocket.EnableAutoSendPing = true;
@@ -60,18 +66,43 @@ namespace Matterbridge
 
         public void Close()
         {
-            if (config.SendApiConnectEvents)
+            if (Config.SendApiConnectEvents)
             {
                 SendMessage(
                     username: "system",
-                    text: config.TEXT_ServerStop,
+                    text: Config.TEXT_ServerStop,
                     @event: ApiMessage.EventJoinLeave,
-                    gateway: config.generalGateway
+                    gateway: Config.generalGateway
                 );
             }
 
             _reconnectWebsocket = false;
             _websocket?.Close();
+        }
+
+        public void SendMessage(string username, string text, string gateway, string @event = "", string account = "")
+        {
+            if (_websocket == null)
+            {
+                Mod.Logger.Error("websocket not initialized yet");
+                return;
+            }
+
+            var message = new ApiMessage(
+                text: text,
+                gateway: gateway,
+                channel: "api",
+                username: username,
+                // TODO: render face and get url to it
+                avatar: "",
+                @event: @event,
+                account: account,
+                protocol: "api"
+            );
+
+            var messageText = JsonConvert.SerializeObject(message);
+            Mod.Logger.Debug("sending: {0}", messageText);
+            _websocket.Send(messageText);
         }
 
         private void websocket_Opened(object sender, EventArgs e)
@@ -91,7 +122,7 @@ namespace Matterbridge
         {
             Mod.Logger.Debug("websocket closed");
 
-            if (api.Server.IsShuttingDown)
+            if (Api.Server.IsShuttingDown)
             {
                 Mod.Logger.Debug($"will not try to reconnect during shutdown");
                 return;
@@ -123,19 +154,19 @@ namespace Matterbridge
             var message = JsonConvert.DeserializeObject<ApiMessage>(text);
             Mod.Logger.Debug("message: {0}", message);
 
-            if (message.gateway == "")
+            if (message.Gateway == "")
             {
-                switch (message.@event)
+                switch (message.Event)
                 {
-                    case ApiMessage.EventAPIConnected:
+                    case ApiMessage.EventApiConnected:
                         Mod.Logger.Chat("api connected");
 
-                        if (config.SendApiConnectEvents)
+                        if (Config.SendApiConnectEvents)
                         {
                             SendMessage(
                                 username: "system",
-                                text: config.TEXT_ServerStart,
-                                gateway: config.generalGateway,
+                                text: Config.TEXT_ServerStart,
+                                gateway: Config.generalGateway,
                                 @event: ""
                             );
                         }
@@ -147,55 +178,55 @@ namespace Matterbridge
             }
 
             int groupUid;
-            if (message.gateway == config.generalGateway)
+            if (message.Gateway == Config.generalGateway)
             {
                 groupUid = GlobalConstants.GeneralChatGroup;
             }
             else
             {
-                var mappingEntry = config.ChannelMapping.FirstOrDefault(entry => entry.gateway == message.gateway);
+                var mappingEntry = Config.ChannelMapping.FirstOrDefault(entry => entry.gateway == message.Gateway);
                 if (mappingEntry == null)
                 {
-                    Mod.Logger.Debug("no group found for channel {0}, skipping message", message.channel);
+                    Mod.Logger.Debug("no group found for channel {0}, skipping message", message.Channel);
                     return;
                 }
 
-                var group = api.Groups.GetOrCreate(api, mappingEntry.groupName);
+                var group = Api.Groups.GetOrCreate(Api, mappingEntry.groupName);
                 groupUid = group.Uid;
             }
 
-            switch (message.@event)
+            switch (message.Event)
             {
                 case ApiMessage.EventJoinLeave:
                 {
-                    api.SendMessageToGroup(
+                    Api.SendMessageToGroup(
                         groupUid,
-                        $"{message.gateway} <strong>{message.username}</strong>: {message.text.Replace(">", "&gt;").Replace("<", "&lt;")}",
+                        $"{message.Gateway} <strong>{message.Username}</strong>: {message.Text.Replace(">", "&gt;").Replace("<", "&lt;")}",
                         EnumChatType.OthersMessage
                     );
                     break;
                 }
                 case ApiMessage.EventUserAction:
                 {
-                    api.SendMessageToGroup(
+                    Api.SendMessageToGroup(
                         groupUid,
-                        $"{message.gateway} <strong>{message.username}</strong> action: {message.text.Replace(">", "&gt;").Replace("<", "&lt;")}",
+                        $"{message.Gateway} <strong>{message.Username}</strong> action: {message.Text.Replace(">", "&gt;").Replace("<", "&lt;")}",
                         EnumChatType.OthersMessage
                     );
                     break;
                 }
                 case "":
                 {
-                    api.SendMessageToGroup(
+                    Api.SendMessageToGroup(
                         groupUid,
-                        $"{message.gateway} <strong>{message.username}</strong>: {message.text.Replace(">", "&gt;").Replace("<", "&lt;")}",
+                        $"{message.Gateway} <strong>{message.Username}</strong>: {message.Text.Replace(">", "&gt;").Replace("<", "&lt;")}",
                         EnumChatType.OthersMessage
                     );
                     break;
                 }
                 default:
                 {
-                    Mod.Logger.Error("unhandled event type {0}", message.@event);
+                    Mod.Logger.Error("unhandled event type {0}", message.Event);
                     break;
                 }
             }
@@ -205,31 +236,6 @@ namespace Matterbridge
             //     $"{message.gateway} <strong>{message.username}</strong>: {message.text.Replace(">", "&gt;").Replace("<", "&lt;")}",
             //     EnumChatType.OthersMessage
             // );
-        }
-
-        public void SendMessage(string username, string text, string gateway, string @event = "", string account = "")
-        {
-            if (_websocket == null)
-            {
-                Mod.Logger.Error("websocket not initialized yet");
-                return;
-            }
-
-            var message = new ApiMessage(
-                text: text,
-                gateway: gateway,
-                channel: "api",
-                username: username,
-                // TODO: render face and get url to it
-                avatar: "",
-                @event: @event,
-                account: account,
-                protocol: "api"
-            );
-
-            var messageText = JsonConvert.SerializeObject(message);
-            Mod.Logger.Debug("sending: {0}", messageText);
-            _websocket.Send(messageText);
         }
     }
 }

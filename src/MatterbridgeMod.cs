@@ -1,58 +1,61 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
-using System.Threading;
-using SuperSocket.ClientEngine;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Server;
 using Vintagestory.GameContent;
-using WebSocket4Net;
 using Newtonsoft.Json;
 
 namespace Matterbridge
 {
     public class MatterbridgeMod : ModSystem
     {
+        // ReSharper disable InconsistentNaming
         private const string PLAYERDATA_LASTSEENKEY = "MATTERBRIDGE_LASTSEEN";
         private const string PLAYERDATA_TOTALPLAYTIMEKEY = "MATTERBRIDGE_TOTALPLAYTIME";
+
         private const string CONFIGNAME = "matterbridge.json";
+        // ReSharper restore InconsistentNaming
 
         private static ICoreServerAPI? _api;
-        private ModConfig? _config;
-        private WebsocketHandler? _websocketHandler;
+        private static ModConfig? _config;
+        private static WebsocketHandler? _websocketHandler;
 
-        private ICoreServerAPI api
+        // ReSharper disable ConvertToAutoProperty
+        private static ICoreServerAPI Api
         {
             get => _api!;
             set => _api = value;
         }
 
-        private ModConfig config
+        private ModConfig Config
         {
             get => _config!;
             set => _config = value;
         }
 
-        private WebsocketHandler websocketHandler
+        private WebsocketHandler WebsocketHandler
         {
             get => _websocketHandler!;
             set => _websocketHandler = value;
         }
+        // ReSharper restore ConvertToAutoProperty
 
         private TemporalStormRunTimeData? _lastData;
         private SystemTemporalStability? _temporalSystem;
 
-        private static readonly Dictionary<string, DateTime> connectTimeDict = new Dictionary<string, DateTime>();
+        private static readonly Dictionary<string, DateTime> ConnectTimeDict = new Dictionary<string, DateTime>();
 
         public override void StartServerSide(ICoreServerAPI api)
         {
-            this.api = api;
+            Api = api;
 
             try
             {
-                config = api.LoadModConfig<ModConfig>(CONFIGNAME);
+                Config = api.LoadModConfig<ModConfig>(CONFIGNAME);
             }
             catch (Exception e)
             {
@@ -60,17 +63,17 @@ namespace Matterbridge
                 return;
             }
 
-            if (this.config == null)
+            if (this.Config == null)
             {
                 Mod.Logger.Notification($"non-existant modconfig at 'ModConfig/{CONFIGNAME}', creating default...");
-                config = new ModConfig();
+                Config = new ModConfig();
             }
 
-            api.StoreModConfig(config, CONFIGNAME);
+            api.StoreModConfig(Config, CONFIGNAME);
 
-            foreach (var entry in config.ChannelMapping)
+            foreach (var entry in Config.ChannelMapping)
             {
-                foreach (var otherEntry in config.ChannelMapping)
+                foreach (var otherEntry in Config.ChannelMapping)
                 {
                     if (entry.groupName == otherEntry.groupName && entry.gateway != otherEntry.gateway)
                     {
@@ -89,7 +92,7 @@ namespace Matterbridge
                 }
             }
 
-            websocketHandler = new WebsocketHandler(api, Mod, config);
+            WebsocketHandler = new WebsocketHandler(api, Mod.Logger, Config);
 
             api.RegisterCommand(
                 command: "me",
@@ -104,16 +107,16 @@ namespace Matterbridge
                 handler: BridgeCommandHandler
             );
 
-            this.api.Event.SaveGameLoaded += Event_SaveGameLoaded;
-            this.api.Event.PlayerChat += Event_PlayerChat;
+            Api.Event.SaveGameLoaded += Event_SaveGameLoaded;
+            Api.Event.PlayerChat += Event_PlayerChat;
 
-            this.api.Event.PlayerJoin += Event_PlayerJoin;
-            this.api.Event.PlayerDisconnect += Event_PlayerDisconnect;
+            Api.Event.PlayerJoin += Event_PlayerJoin;
+            Api.Event.PlayerDisconnect += Event_PlayerDisconnect;
 
-            this.api.Event.ServerRunPhase(EnumServerRunPhase.GameReady, Event_ServerStartup);
-            this.api.Event.ServerRunPhase(EnumServerRunPhase.Shutdown, Event_ServerShutdown);
+            Api.Event.ServerRunPhase(EnumServerRunPhase.GameReady, Event_ServerStartup);
+            Api.Event.ServerRunPhase(EnumServerRunPhase.Shutdown, Event_ServerShutdown);
 
-            this.api.Event.PlayerDeath += Event_PlayerDeath;
+            Api.Event.PlayerDeath += Event_PlayerDeath;
         }
 
         private void ActionCommandHandler(IServerPlayer player, int groupid, CmdArgs args)
@@ -124,12 +127,12 @@ namespace Matterbridge
             string gateway;
             if (groupid == GlobalConstants.GeneralChatGroup)
             {
-                gateway = config.generalGateway;
+                gateway = Config.generalGateway;
             }
             else
             {
-                var group = api.Groups.PlayerGroupsById[groupid];
-                var entry = config.ChannelMapping.FirstOrDefault(e => e.groupName == group.Name);
+                var group = Api.Groups.PlayerGroupsById[groupid];
+                var entry = Config.ChannelMapping.FirstOrDefault(e => e.groupName == group.Name);
                 if (entry == null)
                 {
                     Mod.Logger.Debug("no gateway found for group {0}, skipping message", group.Name);
@@ -139,13 +142,13 @@ namespace Matterbridge
                 gateway = entry.gateway;
             }
 
-            api.SendMessageToGroup(
+            Api.SendMessageToGroup(
                 groupid: groupid,
                 message:
                 $"<i><strong>{player.PlayerName}</strong> {message.Replace(">", "&gt;").Replace("<", "&lt;")}</i>",
                 chatType: EnumChatType.OwnMessage
             );
-            websocketHandler.SendMessage(player.PlayerName, message, gateway, ApiMessage.EventUserAction);
+            WebsocketHandler.SendMessage(player.PlayerName, message, gateway, ApiMessage.EventUserAction);
         }
 
         private void BridgeCommandHandler(IServerPlayer player, int groupid, CmdArgs args)
@@ -156,62 +159,62 @@ namespace Matterbridge
                 case "join":
                 {
                     var gateway = args.PopWord();
-                    var entry = config.ChannelMapping.FirstOrDefault(e => e.gateway == gateway);
+                    var entry = Config.ChannelMapping.FirstOrDefault(e => e.gateway == gateway);
                     if (entry == null)
                     {
                         player.SendMessage(groupid, $"no entry found matching: {gateway}", EnumChatType.Notification);
                         return;
                     }
 
-                    var group = api.Groups.GetOrCreate(api, entry.groupName);
-                    group.AddPlayer(api, player);
+                    var group = Api.Groups.GetOrCreate(Api, entry.groupName);
+                    group.AddPlayer(Api, player);
                     // player.BroadcastPlayerData();
-                    player.SendMessage(groupid, $"added to group: {gateway}, you may need to reconnect", EnumChatType.Notification);
+                    player.SendMessage(groupid, $"added to group: {gateway}, you may need to reconnect",
+                        EnumChatType.Notification);
                     break;
                 }
                 case "leave":
                 {
                     var gateway = args.PopWord();
-                    var entry = config.ChannelMapping.FirstOrDefault(e => e.gateway == gateway);
+                    var entry = Config.ChannelMapping.FirstOrDefault(e => e.gateway == gateway);
                     if (entry == null)
                     {
                         player.SendMessage(groupid, $"no entry found matching: {gateway}", EnumChatType.Notification);
                         return;
                     }
 
-                    var group = api.Groups.GetOrCreate(api, entry.groupName);
+                    var group = Api.Groups.GetOrCreate(Api, entry.groupName);
                     player.ServerData.PlayerGroupMemberShips.Remove(group.Uid);
                     // player.BroadcastPlayerData();
-                    player.SendMessage(groupid, $"removed from group: {gateway}, you may need to reconnect", EnumChatType.Notification);
+                    player.SendMessage(groupid, $"removed from group: {gateway}, you may need to reconnect",
+                        EnumChatType.Notification);
                     break;
                 }
                 case "list":
                 {
-                    var groupNames = config.ChannelMapping
+                    var groupNames = Config.ChannelMapping
                         .Where(entry =>
                             {
-                                var group = api.Groups.GetOrCreate(api, entry.groupName);
-                                return player.Groups.None(membership => membership.GroupUid == @group?.Uid);
+                                var group = Api.Groups.GetOrCreate(Api, entry.groupName);
+                                return player.Groups.None(membership => membership.GroupUid == @group.Uid);
                             }
                         )
                         .Select(entry => entry.gateway)
                         .ToList();
-                    if (groupNames.Count == 0)
-                    {
-                        player.SendMessage(groupid, $"you joined all bridges, try /bridge listall", EnumChatType.Notification);
-                    }
-                    else
-                    {
-                        player.SendMessage(groupid, $"bridges: \n  {string.Join("\n  ", groupNames)}", EnumChatType.Notification);
-                    }
+                    player.SendMessage(groupid,
+                        groupNames.Count == 0
+                            ? $"you joined all bridges, try /bridge listall"
+                            : $"bridges: \n  {string.Join("\n  ", groupNames)}",
+                        EnumChatType.Notification);
                     break;
                 }
                 case "listall":
                 {
-                    var groupNames = config.ChannelMapping
+                    var groupNames = Config.ChannelMapping
                         .Select(entry => entry.gateway)
                         .ToList();
-                    player.SendMessage(groupid, $"bridges: \n  {string.Join("\n  ", groupNames)}", EnumChatType.Notification);
+                    player.SendMessage(groupid, $"bridges: \n  {string.Join("\n  ", groupNames)}",
+                        EnumChatType.Notification);
                     break;
                 }
                 default:
@@ -280,54 +283,55 @@ namespace Matterbridge
                 };
             }
 
-            if (config.SendPlayerDeathEvents)
+            if (Config.SendPlayerDeathEvents)
             {
-                websocketHandler.SendMessage(
+                WebsocketHandler.SendMessage(
                     username: byPlayer.PlayerName,
                     text: deathMessage,
                     @event: ApiMessage.EventUserAction,
                     account: byPlayer.PlayerUID,
-                    gateway: config.generalGateway
+                    gateway: Config.generalGateway
                 );
             }
         }
 
         private void Event_ServerStartup()
         {
-            websocketHandler.Connect();
+            WebsocketHandler.Connect();
         }
 
         private void Event_ServerShutdown()
         {
-            websocketHandler.Close();
+            WebsocketHandler.Close();
         }
 
         private void Event_PlayerDisconnect(IServerPlayer byPlayer)
         {
-            var timePlayed = DateTime.UtcNow - connectTimeDict[byPlayer.PlayerUID];
-            var data = this.api.PlayerData.GetPlayerDataByUid(byPlayer.PlayerUID);
+            var timePlayed = DateTime.UtcNow - ConnectTimeDict[byPlayer.PlayerUID];
+            var data = Api.PlayerData.GetPlayerDataByUid(byPlayer.PlayerUID);
             if (data != null)
             {
-                data.CustomPlayerData[PLAYERDATA_LASTSEENKEY] = DateTime.UtcNow.ToString();
+                data.CustomPlayerData[PLAYERDATA_LASTSEENKEY] = DateTime.UtcNow.ToString(CultureInfo.CurrentCulture);
 
                 if (data.CustomPlayerData.TryGetValue(PLAYERDATA_TOTALPLAYTIMEKEY, out var totalPlaytimeString))
                 {
-                    data.CustomPlayerData[PLAYERDATA_TOTALPLAYTIMEKEY] = (timePlayed + TimeSpan.Parse(totalPlaytimeString)).ToString();
+                    data.CustomPlayerData[PLAYERDATA_TOTALPLAYTIMEKEY] =
+                        (timePlayed + TimeSpan.Parse(totalPlaytimeString)).ToString();
                 }
 
                 data.CustomPlayerData[PLAYERDATA_TOTALPLAYTIMEKEY] = timePlayed.ToString();
             }
 
-            connectTimeDict.Remove(byPlayer.PlayerUID);
+            ConnectTimeDict.Remove(byPlayer.PlayerUID);
 
-            if (config.SendPlayerJoinLeaveEvents)
+            if (Config.SendPlayerJoinLeaveEvents)
             {
-                websocketHandler.SendMessage(
+                WebsocketHandler.SendMessage(
                     username: "system",
                     text: $"{byPlayer.PlayerName} has disconnected from the server! " +
                           // $"played for {timePlayed} " +
-                          $"({api.Server.Players.Count(x => x.PlayerUID != byPlayer.PlayerUID && x.ConnectionState == EnumClientState.Playing)}/{api.Server.Config.MaxClients})",
-                    gateway: config.generalGateway,
+                          $"({Api.Server.Players.Count(x => x.PlayerUID != byPlayer.PlayerUID && x.ConnectionState == EnumClientState.Playing)}/{Api.Server.Config.MaxClients})",
+                    gateway: Config.generalGateway,
                     @event: ApiMessage.EventJoinLeave
                 );
             }
@@ -335,7 +339,7 @@ namespace Matterbridge
 
         private void Event_PlayerJoin(IServerPlayer byPlayer)
         {
-            connectTimeDict.Add(byPlayer.PlayerUID, DateTime.UtcNow);
+            ConnectTimeDict.Add(byPlayer.PlayerUID, DateTime.UtcNow);
 
             // this forces autojoin groups
             // foreach (var entry in config.ChannelMapping)
@@ -345,13 +349,13 @@ namespace Matterbridge
             //     AddPlayerToGroup(byPlayer, group);
             // }
 
-            if (config.SendPlayerJoinLeaveEvents)
+            if (Config.SendPlayerJoinLeaveEvents)
             {
-                websocketHandler.SendMessage(
+                WebsocketHandler.SendMessage(
                     username: "system",
                     text: $"{byPlayer.PlayerName} has connected to the server! " +
-                          $"({api.Server.Players.Count(x => x.ConnectionState != EnumClientState.Offline)}/{api.Server.Config.MaxClients})",
-                    gateway: config.generalGateway,
+                          $"({Api.Server.Players.Count(x => x.ConnectionState != EnumClientState.Offline)}/{Api.Server.Config.MaxClients})",
+                    gateway: Config.generalGateway,
                     @event: ApiMessage.EventJoinLeave,
                     account: byPlayer.PlayerUID
                 );
@@ -361,10 +365,10 @@ namespace Matterbridge
 
         private void Event_SaveGameLoaded()
         {
-            if ( this.config.SendStormNotification &&api.World.Config.GetString("temporalStorms") != "off")
+            if (this.Config.SendStormNotification && Api.World.Config.GetString("temporalStorms") != "off")
             {
-                _temporalSystem = api.ModLoader.GetModSystem<SystemTemporalStability>();
-                api.Event.RegisterGameTickListener(OnTempStormTick, 5000);
+                _temporalSystem = Api.ModLoader.GetModSystem<SystemTemporalStability>();
+                Api.Event.RegisterGameTickListener(OnTempStormTick, 5000);
             }
         }
 
@@ -378,31 +382,32 @@ namespace Matterbridge
 
             var data = _temporalSystem.StormData;
 
-            if (_lastData?.stormDayNotify > 1 && data.stormDayNotify == 1 && config.SendStormEarlyNotification)
+            if (_lastData?.stormDayNotify > 1 && data.stormDayNotify == 1 && Config.SendStormEarlyNotification)
             {
-                websocketHandler.SendMessage(
+                WebsocketHandler.SendMessage(
                     username: "system",
-                    text: config.TEXT_StormEarlyWarning.Replace("{strength}", data.nextStormStrength.ToString().ToLower()),
-                    gateway: config.generalGateway
+                    text: Config.TEXT_StormEarlyWarning.Replace("{strength}",
+                        data.nextStormStrength.ToString().ToLower()),
+                    gateway: Config.generalGateway
                 );
             }
 
             if (_lastData?.stormDayNotify == 1 && data.stormDayNotify == 0)
             {
-                websocketHandler.SendMessage(
+                WebsocketHandler.SendMessage(
                     username: "system",
-                    text: config.TEXT_StormBegin.Replace("{strength}", data.nextStormStrength.ToString().ToLower()),
-                    gateway: config.generalGateway
+                    text: Config.TEXT_StormBegin.Replace("{strength}", data.nextStormStrength.ToString().ToLower()),
+                    gateway: Config.generalGateway
                 );
             }
 
             //double activeDaysLeft = data.stormActiveTotalDays - api.World.Calendar.TotalDays;
             if (_lastData?.stormDayNotify == 0 && data.stormDayNotify != 0)
             {
-                websocketHandler.SendMessage(
+                WebsocketHandler.SendMessage(
                     username: "system",
-                    text: config.TEXT_StormEnd.Replace("{strength}", data.nextStormStrength.ToString().ToLower()),
-                    gateway: config.generalGateway
+                    text: Config.TEXT_StormEnd.Replace("{strength}", data.nextStormStrength.ToString().ToLower()),
+                    gateway: Config.generalGateway
                 );
             }
 
@@ -415,18 +420,18 @@ namespace Matterbridge
             string gateway;
             if (channelId == GlobalConstants.GeneralChatGroup)
             {
-                gateway = config.generalGateway;
+                gateway = Config.generalGateway;
             }
             else
             {
-                PlayerGroup group = api.Groups.PlayerGroupsById[channelId];
-                
+                PlayerGroup group = Api.Groups.PlayerGroupsById[channelId];
+
                 Mod.Logger.Debug($"group: {group.Uid} {group.Name}");
 
                 // look up gateway for group name
-                gateway = config.ChannelMapping.First(entry => entry.groupName == group.Name).gateway;
+                gateway = Config.ChannelMapping.First(entry => entry.groupName == group.Name).gateway;
             }
-            
+
             Mod.Logger.Debug("chat: {0}", message);
 
             var foundText = new Regex(@".*?> (.+)$").Match(message);
@@ -437,7 +442,7 @@ namespace Matterbridge
             Mod.Logger.Debug($"data: {data}");
             Mod.Logger.Chat($"**{byPlayer.PlayerName}**: {foundText.Groups[1].Value}");
 
-            websocketHandler.SendMessage(
+            WebsocketHandler.SendMessage(
                 username: byPlayer.PlayerName,
                 text: foundText.Groups[1].Value,
                 account: byPlayer.PlayerUID,
