@@ -32,18 +32,16 @@
 	</ItemGroup>
 
 	<ItemGroup>
-<!--		<None Include="src/**" CopyToOutputDirectory="PreserveNewest" />-->
+<!--		
+		<None Include="src/**" CopyToOutputDirectory="PreserveNewest" />
+-->
 		<None Include="assets/*" CopyToOutputDirectory="PreserveNewest" />
 		<None Include="modinfo.json" CopyToOutputDirectory="PreserveNewest" />
 		<None Include="modicon.png" CopyToOutputDirectory="PreserveNewest" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <Folder Include="run\server_data" />
-	</ItemGroup>
-
 	<Target Name="Package" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Debug'">
 		<ZipDirectory DestinationFile="bin/$(TargetName).zip" SourceDirectory="$(TargetDir)" Overwrite="true" />
 	</Target>
-	
+
 </Project>
