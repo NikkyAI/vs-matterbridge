@@ -92,7 +92,7 @@ namespace Matterbridge
                 }
             }
 
-            WebsocketHandler = new WebsocketHandler(api, Mod.Logger, Config);
+            WebsocketHandler = new WebsocketHandler(api, Mod, Config);
 
             api.RegisterCommand(
                 command: "me",
