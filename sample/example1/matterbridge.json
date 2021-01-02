@@ -1,0 +1,25 @@
+{
+  "Uri": "ws://localhost:4242/api/websocket",
+  "Token": "5YZJgQwRb4nzMgLicMFn",
+  "SendApiConnectEvents": true,
+  "SendPlayerJoinLeaveEvents": true,
+  "SendPlayerDeathEvents": true,
+  "SendStormNotification": true,
+  "SendStormEarlyNotification": true,
+  "generalGateway": "main",
+  "ChannelMapping": [
+    {
+      "groupName": "announcements",
+      "gateway": "oneway"
+    },
+    {
+      "groupName": "offtopic",
+      "gateway": "short"
+    }
+  ],
+  "TEXT_StormEarlyWarning": "It appears a {strength} storm is coming...",
+  "TEXT_StormBegin": "Harketh the storm doth come, Wary be thine self, as for thy own end be near.",
+  "TEXT_StormEnd": "The temporal storm seems to be waning...",
+  "TEXT_ServerStart": "Server is now up and running. Come on in!",
+  "TEXT_ServerStop": "Server is shutting down. Goodbye!"
+}
