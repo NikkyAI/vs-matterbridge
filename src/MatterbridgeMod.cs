@@ -21,23 +21,17 @@ namespace Matterbridge
 
         private static ICoreServerAPI? _api;
         private ModConfig? _config;
-        private string? _generalGateway;
 
         private ICoreServerAPI api
         {
             get => _api!;
             set => _api = value;
         }
-        
-        private ModConfig config { 
-            get => _config!;
-            set => _config = value; 
-        }
 
-        private string generalGateway
+        private ModConfig config
         {
-            get => _generalGateway!;
-            set => _generalGateway = value;
+            get => _config!;
+            set => _config = value;
         }
 
         private TemporalStormRunTimeData? _lastData;
@@ -92,21 +86,18 @@ namespace Matterbridge
                 }
             }
 
-            var generalMappingEntries = config.ChannelMapping.FindAll(entry => entry.groupName == "");
-            if (generalMappingEntries.Count == 1)
-            {
-                generalGateway = generalMappingEntries[0].gateway;
-            }
-            else if (generalMappingEntries.Count == 0)
-            {
-                api.Logger.Error("no mapping found for general group with name: \"\", adding default");
-                config.ChannelMapping.Add(
-                    new ChannelMappingEntry("", "general")
-                );
-                api.StoreModConfig(config, CONFIGNAME);
-                return;
-            }
-
+            api.RegisterCommand(
+                command: "me",
+                descriptionMsg: "a action",
+                syntaxMsg: "/me <text>",
+                handler: ActionCommandHandler
+            );
+            api.RegisterCommand(
+                command: "bridge",
+                descriptionMsg: "chatbridge controls",
+                syntaxMsg: "/bridge join|leave|list|listall",
+                handler: BridgeCommandHandler
+            );
 
             this.api.Event.SaveGameLoaded += Event_SaveGameLoaded;
             this.api.Event.PlayerChat += Event_PlayerChat;
@@ -118,6 +109,112 @@ namespace Matterbridge
             this.api.Event.ServerRunPhase(EnumServerRunPhase.Shutdown, Event_ServerShutdown);
 
             this.api.Event.PlayerDeath += Event_PlayerDeath;
+        }
+
+        private void ActionCommandHandler(IServerPlayer player, int groupid, CmdArgs args)
+        {
+            var message = args.PopAll();
+
+            api.Logger.Debug($"groupId: {groupid}");
+            string gateway;
+            if (groupid == GlobalConstants.GeneralChatGroup)
+            {
+                gateway = config.generalGateway;
+            }
+            else
+            {
+                var group = api.Groups.PlayerGroupsById[groupid];
+                var entry = config.ChannelMapping.FirstOrDefault(e => e.groupName == group.Name);
+                if (entry == null)
+                {
+                    api.Logger.Debug("no gateway found for group {0}, skipping message", group.Name);
+                    return;
+                }
+
+                gateway = entry.gateway;
+            }
+
+            api.SendMessageToGroup(
+                groupid: groupid,
+                message:
+                $"<i><strong>{player.PlayerName}</strong> {message.Replace(">", "&gt;").Replace("<", "&lt;")}</i>",
+                chatType: EnumChatType.OwnMessage
+            );
+            Send_Message(player.PlayerName, message, gateway, ApiMessage.EventUserAction);
+        }
+
+        private void BridgeCommandHandler(IServerPlayer player, int groupid, CmdArgs args)
+        {
+            var arg0 = args.PopWord();
+            switch (arg0)
+            {
+                case "join":
+                {
+                    var gateway = args.PopWord();
+                    var entry = config.ChannelMapping.FirstOrDefault(e => e.gateway == gateway);
+                    if (entry == null)
+                    {
+                        player.SendMessage(groupid, $"no entry found matching: {gateway}", EnumChatType.Notification);
+                        return;
+                    }
+
+                    var group = api.Groups.GetOrCreate(api, entry.groupName);
+                    group.AddPlayer(api, player);
+                    // player.BroadcastPlayerData();
+                    player.SendMessage(groupid, $"added to group: {gateway}, you may need to reconnect", EnumChatType.Notification);
+                    break;
+                }
+                case "leave":
+                {
+                    var gateway = args.PopWord();
+                    var entry = config.ChannelMapping.FirstOrDefault(e => e.gateway == gateway);
+                    if (entry == null)
+                    {
+                        player.SendMessage(groupid, $"no entry found matching: {gateway}", EnumChatType.Notification);
+                        return;
+                    }
+
+                    var group = api.Groups.GetOrCreate(api, entry.groupName);
+                    player.ServerData.PlayerGroupMemberShips.Remove(group.Uid);
+                    // player.BroadcastPlayerData();
+                    player.SendMessage(groupid, $"removed from group: {gateway}, you may need to reconnect", EnumChatType.Notification);
+                    break;
+                }
+                case "list":
+                {
+                    var groupNames = config.ChannelMapping
+                        .Where(entry =>
+                            {
+                                var group = api.Groups.GetOrCreate(api, entry.groupName);
+                                return player.Groups.None(membership => membership.GroupUid == @group?.Uid);
+                            }
+                        )
+                        .Select(entry => entry.gateway)
+                        .ToList();
+                    if (groupNames.Count == 0)
+                    {
+                        player.SendMessage(groupid, $"you joined all bridges, try /bridge listall", EnumChatType.Notification);
+                    }
+                    else
+                    {
+                        player.SendMessage(groupid, $"bridges: \n  {string.Join("\n  ", groupNames)}", EnumChatType.Notification);
+                    }
+                    break;
+                }
+                case "listall":
+                {
+                    var groupNames = config.ChannelMapping
+                        .Select(entry => entry.gateway)
+                        .ToList();
+                    player.SendMessage(groupid, $"bridges: \n  {string.Join("\n  ", groupNames)}", EnumChatType.Notification);
+                    break;
+                }
+                default:
+                {
+                    player.SendMessage(groupid, $"unknown subcommand {arg0}", EnumChatType.Notification);
+                    break;
+                }
+            }
         }
 
         private void Event_PlayerDeath(IServerPlayer byPlayer, DamageSource? damageSource)
@@ -185,7 +282,7 @@ namespace Matterbridge
                     text: deathMessage,
                     @event: ApiMessage.EventUserAction,
                     account: byPlayer.PlayerUID,
-                    gateway: generalGateway
+                    gateway: config.generalGateway
                 );
             }
         }
@@ -203,7 +300,7 @@ namespace Matterbridge
                     username: "system",
                     text: config.TEXT_ServerStop,
                     @event: ApiMessage.EventJoinLeave,
-                    gateway: generalGateway
+                    gateway: config.generalGateway
                 );
             }
 
@@ -237,7 +334,7 @@ namespace Matterbridge
                     username: "system",
                     text: $"{byPlayer.PlayerName} has disconnected from the server! " +
                           $"({api.Server.Players.Count(x => x.PlayerUID != byPlayer.PlayerUID && x.ConnectionState == EnumClientState.Playing)}/{api.Server.Config.MaxClients})",
-                    gateway: generalGateway,
+                    gateway: config.generalGateway,
                     @event: ApiMessage.EventJoinLeave
                 );
             }
@@ -246,12 +343,14 @@ namespace Matterbridge
         private void Event_PlayerJoin(IServerPlayer byPlayer)
         {
             connectTimeDict.Add(byPlayer.PlayerUID, DateTime.UtcNow);
-            foreach (var entry in config.ChannelMapping)
-            {
-                var group = Get_or_Create_Group(entry.groupName);
 
-                AddPlayerToGroup(byPlayer, group);
-            }
+            // this forces autojoin groups
+            // foreach (var entry in config.ChannelMapping)
+            // {
+            //     var group = Get_or_Create_Group(entry.groupName);
+            //
+            //     AddPlayerToGroup(byPlayer, group);
+            // }
 
             if (config.SendPlayerJoinLeaveEvents)
             {
@@ -259,7 +358,7 @@ namespace Matterbridge
                     username: "system",
                     text: $"{byPlayer.PlayerName} has connected to the server! " +
                           $"({api.Server.Players.Count(x => x.ConnectionState != EnumClientState.Offline)}/{api.Server.Config.MaxClients})",
-                    gateway: generalGateway,
+                    gateway: config.generalGateway,
                     @event: ApiMessage.EventJoinLeave,
                     account: byPlayer.PlayerUID
                 );
@@ -269,7 +368,7 @@ namespace Matterbridge
 
         private void Event_SaveGameLoaded()
         {
-            if ( /*this.config.SendStormNotification &&*/ api.World.Config.GetString("temporalStorms") != "off")
+            if ( this.config.SendStormNotification &&api.World.Config.GetString("temporalStorms") != "off")
             {
                 _temporalSystem = api.ModLoader.GetModSystem<SystemTemporalStability>();
                 api.Event.RegisterGameTickListener(OnTempStormTick, 5000);
@@ -285,15 +384,13 @@ namespace Matterbridge
             }
 
             var data = _temporalSystem.StormData;
-            
-            api.Logger.Debug($"storm day {data.stormDayNotify} {data.nextStormStrength}");
-            
+
             if (_lastData?.stormDayNotify > 1 && data.stormDayNotify == 1 && config.SendStormEarlyNotification)
             {
                 Send_Message(
                     username: "system",
-                    text: config.TEXT_StormEarlyWarning.Replace("{strength}",data.nextStormStrength.ToString().ToLower()),
-                    gateway: generalGateway
+                    text: config.TEXT_StormEarlyWarning.Replace("{strength}", data.nextStormStrength.ToString().ToLower()),
+                    gateway: config.generalGateway
                 );
             }
 
@@ -302,7 +399,7 @@ namespace Matterbridge
                 Send_Message(
                     username: "system",
                     text: config.TEXT_StormBegin.Replace("{strength}", data.nextStormStrength.ToString().ToLower()),
-                    gateway: generalGateway
+                    gateway: config.generalGateway
                 );
             }
 
@@ -312,7 +409,7 @@ namespace Matterbridge
                 Send_Message(
                     username: "system",
                     text: config.TEXT_StormEnd.Replace("{strength}", data.nextStormStrength.ToString().ToLower()),
-                    gateway: generalGateway
+                    gateway: config.generalGateway
                 );
             }
 
@@ -322,13 +419,22 @@ namespace Matterbridge
         private void Event_PlayerChat(IServerPlayer byPlayer, int channelId, ref string message, ref string data,
             Vintagestory.API.Datastructures.BoolRef consumed)
         {
-            PlayerGroup group = channelId == GlobalConstants.GeneralChatGroup ? api.Groups.GetPlayerGroupByName("") : api.Groups.PlayerGroupsById[channelId];
+            string gateway;
+            if (channelId == GlobalConstants.GeneralChatGroup)
+            {
+                gateway = config.generalGateway;
+            }
+            else
+            {
+                PlayerGroup group = api.Groups.PlayerGroupsById[channelId];
+                
+                api.Logger.Debug($"group: {group.Uid} {group.Name}");
 
+                // look up gateway for group name
+                gateway = config.ChannelMapping.First(entry => entry.groupName == group.Name).gateway;
+            }
+            
             api.Logger.Debug("chat: {0}", message);
-            api.Logger.Debug($"group: {group.Uid} {group.Name}");
-
-            // look up gateway for group name
-            var gateway = config.ChannelMapping.First(entry => entry.groupName == group.Name).gateway;
 
             var foundText = new Regex(@".*?> (.+)$").Match(message);
             if (!foundText.Success)
@@ -406,75 +512,10 @@ namespace Matterbridge
             }
         }
 
-        private PlayerGroup Get_or_Create_Group(string groupName)
-        {
-            var group = api.Groups.GetPlayerGroupByName(groupName);
-
-            // if (/*gateway != config.Gateway && */gateway != "")
-            // {
-            if (group == null)
-            {
-                api.Logger.Debug("group not found for name {0}", groupName);
-
-                group = new PlayerGroup
-                {
-                    Name = groupName,
-                    Uid = api.Groups.PlayerGroupsById.Keys.Max() + 1
-                };
-                var generalGroup = api.Groups.GetPlayerGroupByName("");
-                group.OwnerUID = generalGroup.OwnerUID;
-
-                api.Logger.Notification("creating group {0}", group.Name);
-                api.Groups.AddPlayerGroup(group);
-
-                api.Logger.Debug("adding players to group {0}", group.Name);
-                foreach (var player in api.Server.Players)
-                {
-                    AddPlayerToGroup(player, group);
-                }
-            }
-
-            // TODO: save group to gateway_groups.json
-            // config.ChannelMapping.Add(
-            //     new ChannelMappingEntry(
-            //         group: group.Name,
-            //         gateway: gateway)
-            //     );
-            // api.StoreModConfig(config, CONFIGNAME);
-            // }
-            // else
-            // {
-            //     group = api.Groups.GetPlayerGroupByName("");
-            // }
-
-            api.Logger.Debug($"group: {group.Name} {group.Uid}");
-            return group;
-        }
-
-        private void AddPlayerToGroup(IServerPlayer player, PlayerGroup group)
-        {
-            var serverPlayer = player.ServerData;
-            if (!serverPlayer.PlayerGroupMemberShips.ContainsKey(group.Uid))
-            {
-                api.Logger.Debug($"adding {player.PlayerName} to group {group.Name}");
-                serverPlayer.PlayerGroupMemberShips.Add(
-                    key: group.Uid,
-                    value: new PlayerGroupMembership()
-                    {
-                        GroupUid = group.Uid,
-                        GroupName = group.Name,
-                        Level = EnumPlayerGroupMemberShip.Member
-                    }
-                );
-            }
-        }
-
         // websocket
 
         private void websocket_MessageReceived(object sender, MessageReceivedEventArgs eventArgs)
         {
-
-            
             var text = eventArgs.Message;
             api.Logger.VerboseDebug("text: {0}", text);
 
@@ -504,22 +545,31 @@ namespace Matterbridge
                 return;
             }
 
-
-            var mappingEntry = config.ChannelMapping.FirstOrDefault(entry => entry.gateway == message.gateway);
-            if (mappingEntry == null)
+            int groupUid;
+            if (message.gateway == config.generalGateway)
             {
-                api.Logger.Debug("no group found for channel {0}, skipping message", message.channel);
-                return;
+                groupUid = GlobalConstants.GeneralChatGroup;
+            }
+            else
+            {
+                var mappingEntry = config.ChannelMapping.FirstOrDefault(entry => entry.gateway == message.gateway);
+                if (mappingEntry == null)
+                {
+                    api.Logger.Debug("no group found for channel {0}, skipping message", message.channel);
+                    return;
+                }
+
+                var group = api.Groups.GetOrCreate(api, mappingEntry.groupName);
+                groupUid = group.Uid;
             }
 
-            var group = Get_or_Create_Group(mappingEntry.groupName);
 
             switch (message.@event)
             {
                 case ApiMessage.EventJoinLeave:
                 {
                     api.SendMessageToGroup(
-                        group.Uid,
+                        groupUid,
                         $"{message.gateway} <strong>{message.username}</strong>: {message.text.Replace(">", "&gt;").Replace("<", "&lt;")}",
                         EnumChatType.OthersMessage
                     );
@@ -528,7 +578,7 @@ namespace Matterbridge
                 case ApiMessage.EventUserAction:
                 {
                     api.SendMessageToGroup(
-                        group.Uid,
+                        groupUid,
                         $"{message.gateway} <strong>{message.username}</strong> action: {message.text.Replace(">", "&gt;").Replace("<", "&lt;")}",
                         EnumChatType.OthersMessage
                     );
@@ -537,7 +587,7 @@ namespace Matterbridge
                 case "":
                 {
                     api.SendMessageToGroup(
-                        group.Uid,
+                        groupUid,
                         $"{message.gateway} <strong>{message.username}</strong>: {message.text.Replace(">", "&gt;").Replace("<", "&lt;")}",
                         EnumChatType.OthersMessage
                     );
@@ -559,13 +609,12 @@ namespace Matterbridge
 
         private void Send_Message(string username, string text, string gateway, string @event = "", string account = "")
         {
-
             if (_websocket == null)
             {
                 api.Logger.Error("websocket not initialized yet");
                 return;
             }
-            
+
             var message = new ApiMessage(
                 text: text,
                 gateway: gateway,

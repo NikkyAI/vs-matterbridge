@@ -38,16 +38,18 @@ announces when players die
 
 announces storm events
 
+#### `string` generalGateway
+
+main gateway for status updates and linking to general chat
+
 #### `List<ChannelMappingEntry>` ChannelMapping
+
+mapping of group names to gateways
 
 example: 
 ```json
 {
   "ChannelMapping": [
-    {
-      "groupName": "",
-      "gateway": "general"
-    },
     {
       "groupName": "announcements",
       "gateway": "announcements"
@@ -153,11 +155,8 @@ inout = [
   "SendPlayerDeathEvents": true,
   "SendStormNotification": true,
   "SendStormEarlyNotification": true,
+  "generalGateway": "main",
   "ChannelMapping": [
-    {
-      "groupName": "",
-      "gateway": "main"
-    },
     {
       "groupName": "announcements",
       "gateway": "oneway"

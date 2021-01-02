@@ -15,6 +15,7 @@ namespace Matterbridge
         public bool SendStormEarlyNotification = true;
         // public string Gateway = "";
 
+        public string generalGateway = "general";
         public List<ChannelMappingEntry> ChannelMapping = new List<ChannelMappingEntry>();
 
         public string TEXT_StormEarlyWarning { get; set; } = "It appears a {strength} storm is coming...";
