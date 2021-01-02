@@ -27,19 +27,19 @@ namespace Matterbridge
         // ReSharper disable ConvertToAutoProperty
         private static ICoreServerAPI Api
         {
-            get => _api!;
+            get => _api ?? throw new NullReferenceException("api is not initialized yet");
             set => _api = value;
         }
 
-        private ModConfig Config
+        private static ModConfig Config
         {
-            get => _config!;
+            get => _config ?? throw new NullReferenceException("config is not initialized yet");
             set => _config = value;
         }
 
         private WebsocketHandler WebsocketHandler
         {
-            get => _websocketHandler!;
+            get => _websocketHandler ?? throw new NullReferenceException("websocket handler is not initialized yet");
             set => _websocketHandler = value;
         }
         // ReSharper restore ConvertToAutoProperty
@@ -63,7 +63,7 @@ namespace Matterbridge
                 return;
             }
 
-            if (this.Config == null)
+            if (Config == null)
             {
                 Mod.Logger.Notification($"non-existant modconfig at 'ModConfig/{CONFIGNAME}', creating default...");
                 Config = new ModConfig();
@@ -365,7 +365,7 @@ namespace Matterbridge
 
         private void Event_SaveGameLoaded()
         {
-            if (this.Config.SendStormNotification && Api.World.Config.GetString("temporalStorms") != "off")
+            if (Config.SendStormNotification && Api.World.Config.GetString("temporalStorms") != "off")
             {
                 _temporalSystem = Api.ModLoader.GetModSystem<SystemTemporalStability>();
                 Api.Event.RegisterGameTickListener(OnTempStormTick, 5000);

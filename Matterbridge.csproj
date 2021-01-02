@@ -32,7 +32,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-<!--		
+<!--
 		<None Include="src/**" CopyToOutputDirectory="PreserveNewest" />
 -->
 		<None Include="assets/*" CopyToOutputDirectory="PreserveNewest" />

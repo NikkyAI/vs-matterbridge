@@ -47,9 +47,9 @@ namespace Matterbridge
                 _websocket = new WebSocket(
                     uri: Config.Uri,
                     customHeaderItems: customHeaderItems
-                );
-                _websocket.EnableAutoSendPing = true;
-                _websocket.AutoSendPingInterval = 100;
+                ) {
+                    EnableAutoSendPing = true, AutoSendPingInterval = 100
+                };
                 _websocket.Opened += websocket_Opened;
                 _websocket.Error += websocket_Error;
                 _websocket.Closed += websocket_Closed;
