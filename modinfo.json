@@ -2,7 +2,7 @@
   "type": "code",
   "name": "Matterbridge API Connector",
   "modid": "matterbridge",
-  "version": "0.0.2",
+  "version": "0.0.3",
 
   "description" : "A matterbridge api connector for VS server",
   "website": "https://github.com/NikkyAI/vs-matterbridge",

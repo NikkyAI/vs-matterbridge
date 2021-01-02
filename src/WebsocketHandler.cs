@@ -13,9 +13,8 @@ namespace Matterbridge
 {
     internal class WebsocketHandler
     {
-        private ICoreServerAPI api;
-        private ModConfig config;
-
+        private readonly ICoreServerAPI api;
+        private readonly ModConfig config;
 
         private WebSocket? _websocket;
         private bool _reconnectWebsocket = true;
@@ -41,6 +40,8 @@ namespace Matterbridge
                     uri: config.Uri,
                     customHeaderItems: customHeaderItems
                 );
+                _websocket.EnableAutoSendPing = true;
+                _websocket.AutoSendPingInterval = 100;
                 _websocket.Opened += websocket_Opened;
                 _websocket.Error += websocket_Error;
                 _websocket.Closed += websocket_Closed;
@@ -74,31 +75,41 @@ namespace Matterbridge
         private void websocket_Opened(object sender, EventArgs e)
         {
             _connectErrrors = 0;
-            api.Logger.Debug("websocket_Opened");
-            api.Logger.Debug($"sender: {sender}");
-            //TODO: send `vs bridge connected`
-            // websocket.Send("Hello World!");
+            api.Logger.Debug("websocket opened");
         }
 
         private void websocket_Error(object sender, ErrorEventArgs errorEventArgs)
         {
             _connectErrrors++;
-            api.Logger.Error($"connect error: {_connectErrrors}");
+            api.Logger.Error($"connect errors: {_connectErrrors}");
             api.Logger.Error($"websocket_Error: {errorEventArgs.Exception}");
         }
 
         private void websocket_Closed(object sender, EventArgs eventArgs)
         {
-            api.Logger.Debug("websocket_Closed");
+            api.Logger.Debug("websocket closed");
 
-            if (_reconnectWebsocket && _connectErrrors < 10)
+            if (api.Server.IsShuttingDown)
             {
-                Thread.Sleep(100);
-                Connect();
+                api.Logger.Debug($"will not try to reconnect during shutdown");
+                return;
+            }
+
+            if (_reconnectWebsocket)
+            {
+                if (_connectErrrors < 10)
+                {
+                    Thread.Sleep(100);
+                    Connect();
+                }
+                else
+                {
+                    api.Logger.Error($"will not try to reconnect after {_connectErrrors} failed connection attempts");
+                }
             }
             else
             {
-                api.Logger.Error($"will not try to reconnect after {_connectErrrors} failed connection attempts");
+                api.Logger.Debug("will not try to reconnect");
             }
         }
 

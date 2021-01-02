@@ -303,20 +303,18 @@ namespace Matterbridge
 
         private void Event_PlayerDisconnect(IServerPlayer byPlayer)
         {
+            var timePlayed = DateTime.UtcNow - connectTimeDict[byPlayer.PlayerUID];
             var data = this.api.PlayerData.GetPlayerDataByUid(byPlayer.PlayerUID);
             if (data != null)
             {
-                data.CustomPlayerData[PLAYERDATA_LASTSEENKEY] = JsonConvert.SerializeObject(DateTime.UtcNow);
+                data.CustomPlayerData[PLAYERDATA_LASTSEENKEY] = DateTime.UtcNow.ToString();
 
-                var timePlayed = DateTime.UtcNow - connectTimeDict[byPlayer.PlayerUID];
-                if (data.CustomPlayerData.TryGetValue(PLAYERDATA_TOTALPLAYTIMEKEY, out var totalPlaytimeJson))
+                if (data.CustomPlayerData.TryGetValue(PLAYERDATA_TOTALPLAYTIMEKEY, out var totalPlaytimeString))
                 {
-                    data.CustomPlayerData[PLAYERDATA_TOTALPLAYTIMEKEY] =
-                        JsonConvert.SerializeObject(timePlayed +
-                                                    JsonConvert.DeserializeObject<TimeSpan>(totalPlaytimeJson));
+                    data.CustomPlayerData[PLAYERDATA_TOTALPLAYTIMEKEY] = (timePlayed + TimeSpan.Parse(totalPlaytimeString)).ToString();
                 }
 
-                data.CustomPlayerData[PLAYERDATA_TOTALPLAYTIMEKEY] = JsonConvert.SerializeObject(timePlayed);
+                data.CustomPlayerData[PLAYERDATA_TOTALPLAYTIMEKEY] = timePlayed.ToString();
             }
 
             connectTimeDict.Remove(byPlayer.PlayerUID);
@@ -326,6 +324,7 @@ namespace Matterbridge
                 websocketHandler.SendMessage(
                     username: "system",
                     text: $"{byPlayer.PlayerName} has disconnected from the server! " +
+                          // $"played for {timePlayed} " +
                           $"({api.Server.Players.Count(x => x.PlayerUID != byPlayer.PlayerUID && x.ConnectionState == EnumClientState.Playing)}/{api.Server.Config.MaxClients})",
                     gateway: config.generalGateway,
                     @event: ApiMessage.EventJoinLeave
