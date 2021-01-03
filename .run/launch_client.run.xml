@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="launch (server)" type="RunExe" factoryName=".NET Executable">
-    <option name="EXE_PATH" value="$USER_HOME$/AppData/Roaming/Vintagestory/VintagestoryServer.exe" />
-    <option name="PROGRAM_PARAMETERS" value="--addModPath $PROJECT_DIR$/bin --dataPath $PROJECT_DIR$/run/server_data" />
+  <configuration default="false" name="launch (client)" type="RunExe" factoryName=".NET Executable">
+    <option name="EXE_PATH" value="$USER_HOME$/AppData/Roaming/Vintagestory/Vintagestory.exe" />
+    <option name="PROGRAM_PARAMETERS" value="--addModPath $PROJECT_DIR$/bin --dataPath $PROJECT_DIR$/run/client" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
     <option name="PASS_PARENT_ENVS" value="1" />
     <option name="USE_EXTERNAL_CONSOLE" value="0" />

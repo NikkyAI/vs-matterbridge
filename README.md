@@ -111,8 +111,8 @@ example: announcements channel bridged to VS
 
 ## example configs
 
-- [example1](./sample/example1)
-- [example2](./sample/example2)
+- [example1](./sample/example1) 
+- [example2](./sample/example2) readonly twitch chat & irc
 
 ## contributions
 
