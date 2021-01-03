@@ -1,0 +1,12 @@
+version: '3.7'
+services:
+  matterbridge:
+    image: 42wim/matterbridge:stable
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:4242:4242"
+    volumes:
+      - ./matterbridge/:/etc/matterbridge/matterbridge/
+    environment:
+      MATTERBRIDGE_DISCORD_AURAFURY_TOKEN: "INSERT_TOKEN_HERE"
+      MATTERBRIDGE_API_VINTAGESTORY_TOKENL: "INSERT_TOKEN_HERE"

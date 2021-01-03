@@ -1,0 +1,111 @@
+[irc.twitch]
+#Add the oauth token here you got from https://twitchapps.com/tmi/
+#Password="oauth:yourtoken"
+Nick="justinfan1337"
+Server="irc.chat.twitch.tv:6697"
+UseTLS=true
+RemoteNickFormat="<{NICK}> "
+ShowJoinPart=false
+NoSendJoinPart=true
+
+[discord.aurafury]
+#REQUIRED
+#Token="" # set me via env MATTERBRIDGE_DISCORD_AURAFURY_TOKEN=tokenvalue
+
+#REQUIRED
+#Server="Aura Fury"
+Server="ID:182193706437312515"
+
+#Disable sending of edits to other bridges
+#OPTIONAL (default false)
+EditDisable=false
+
+# AutoWebhooks automatically configures message sending in the style of puppets.
+# This is an easier alternative to manually configuring "WebhookURL" for each gateway,
+# as turning this on will automatically load or create webhooks for each channel.
+# This feature requires the "Manage Webhooks" permission (either globally or as per-channel).
+AutoWebhooks=true
+
+# Label is as an extra identifier for use in the RemoteNickFormat setting.
+Label="discord.aurafury"
+
+# RemoteNickFormat formats how remote users appear on this bridge.
+# See the [general] config section for default options
+RemoteNickFormat="{NICK}"
+
+ShowJoinPart = true
+
+###################################################################
+#API
+###################################################################
+[api]
+##You can configure multiple API hooks
+##In this example we use [api.local]
+##REQUIRED
+
+[api.vintagestory]
+#Address to listen on for API
+#REQUIRED 
+BindAddress="0.0.0.0:4242"
+#BindAddress="127.0.0.1:4242"
+
+#Bearer token used for authentication
+#curl -H "Authorization: Bearer secret" http://nikky.moe:4242/api/messages
+#OPTIONAL (no authorization if token is empty)
+#Token="token12345"  # set me via env MATTERBRIDGE_API_VINTAGESTORY_TOKEN=tokenvalue
+
+#Amount of messages to keep in memory
+Buffer=1000
+
+# RemoteNickFormat defines how remote users appear on this bridge 
+# The string "{NICK}" (case sensitive) will be replaced by the actual nick / username.
+# The string "{BRIDGE}" (case sensitive) will be replaced by the sending bridge
+# The string "{LABEL}" (case sensitive) will be replaced by Label= field of the sending bridge
+# The string "{PROTOCOL}" (case sensitive) will be replaced by the protocol used by the bridge
+# OPTIONAL (default empty)
+RemoteNickFormat="{NICK}"
+ShowJoinPart = true
+
+#extra label that can be used in the RemoteNickFormat
+#optional (default empty)
+Label="api.vintagestory"
+
+[general]
+
+#RemoteNickFormat defines how remote users appear on this bridge
+#The string "{NICK}" (case sensitive) will be replaced by the actual nick.
+#The string "{USERID}" (case sensitive) will be replaced by the user ID.
+#The string "{BRIDGE}" (case sensitive) will be replaced by the sending bridge
+#The string "{LABEL}" (case sensitive) will be replaced by label= field of the sending bridge
+#The string "{PROTOCOL}" (case sensitive) will be replaced by the protocol used by the bridge
+#The string "{GATEWAY}" (case sensitive) will be replaced by the origin gateway name that is replicating the message.
+#The string "{CHANNEL}" (case sensitive) will be replaced by the origin channel name used by the bridge
+#The string "{TENGO}" (case sensitive) will be replaced by the output of the RemoteNickFormat script under [tengo]
+#OPTIONAL (default empty)
+RemoteNickFormat="[{PROTOCOL}] <{NICK}> "
+
+[[gateway]]
+name="general"
+enable=true
+    [[gateway.inout]]
+    account="discord.aurafury"
+    channel="vs-server-direct-chat"
+#    channel="ID:795359150480687105"
+    
+    [[gateway.inout]]
+    account="api.vintagestory"
+    channel="api"
+
+
+[[gateway]]
+name="twitch_copygirl"
+enable=true
+
+    [[gateway.out]]
+    account="api.vintagestory"
+    channel="api"
+
+    [[gateway.in]]
+    account="irc.twitch"
+    channel="#copygirl"
+

@@ -1,0 +1,21 @@
+{
+  "Uri": "ws://127.0.0.1:4242/api/websocket",
+  "Token": "INSERT_TOKEN__HERE",
+  "SendApiConnectEvents": true,
+  "SendPlayerJoinLeaveEvents": true,
+  "SendPlayerDeathEvents": true,
+  "SendStormNotification": true,
+  "SendStormEarlyNotification": true,
+  "generalGateway": "general",
+  "ChannelMapping": [
+    {
+      "groupName": "twitch copygirl",
+      "gateway": "twitch_copygirl"
+    }
+  ],
+  "TEXT_StormEarlyWarning": "It appears a {strength} storm is coming...",
+  "TEXT_StormBegin": "Harketh the storm doth come, Wary be thine self, as for thy own end be near.",
+  "TEXT_StormEnd": "The temporal storm seems to be waning...",
+  "TEXT_ServerStart": "Server is now up and running. Come on in!",
+  "TEXT_ServerStop": "Server is shutting down. Goodbye!"
+}

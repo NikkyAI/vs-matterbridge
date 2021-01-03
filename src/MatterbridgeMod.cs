@@ -76,6 +76,7 @@ namespace Matterbridge
                 handler: BridgeReloadCommandHandler,
                 requiredPrivilege: "controlserver"
             );
+            Api.Logger.Debug($"{Environment.OSVersion.Platform}");
 
             Api.Event.SaveGameLoaded += Event_SaveGameLoaded;
             Api.Event.PlayerChat += Event_PlayerChat;
