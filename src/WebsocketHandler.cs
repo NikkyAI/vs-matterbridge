@@ -36,6 +36,8 @@ namespace Matterbridge
 
         public void Connect()
         {
+            Close(skipMessage: true);
+            _reconnectWebsocket = true;
             try
             {
                 var customHeaderItems = new List<KeyValuePair<string, string>>();
@@ -48,7 +50,8 @@ namespace Matterbridge
                     uri: Config.Uri,
                     customHeaderItems: customHeaderItems
                 ) {
-                    EnableAutoSendPing = true, AutoSendPingInterval = 100
+                    EnableAutoSendPing = true,
+                    AutoSendPingInterval = 100
                 };
                 _websocket.Opened += websocket_Opened;
                 _websocket.Error += websocket_Error;
@@ -64,9 +67,9 @@ namespace Matterbridge
             }
         }
 
-        public void Close()
+        public void Close(bool skipMessage = false)
         {
-            if (Config.SendApiConnectEvents)
+            if (Config.SendApiConnectEvents && !skipMessage)
             {
                 SendMessage(
                     username: "system",

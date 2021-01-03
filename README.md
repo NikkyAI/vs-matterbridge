@@ -65,6 +65,42 @@ example:
 
 text templates for messages sent to matterbridge
 
+## commands
+
+#### me
+
+`/me <message>`
+
+do a action
+
+### bridge join
+
+`/bridge join <gateway>`  
+join a gateway/bridge
+
+### bridge leave
+
+`/bridge leave <gateway>`  
+leave a gateway/bridge
+
+### bridge list
+
+`/bridge list`  
+lists gateways that you are not in
+
+### bridge listall
+
+`/bridge listall` 
+list all gateways
+
+### bridgereload
+
+`/bridgereload`
+
+admin only  
+reloads config and
+restarts the websocket connection to matterbridge
+
 ## how to setup matterbridge
 
 https://github.com/42wim/matterbridge/wiki/How-to-create-your-config

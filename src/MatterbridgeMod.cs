@@ -53,6 +53,44 @@ namespace Matterbridge
         {
             Api = api;
 
+            LoadConfig();
+
+            WebsocketHandler = new WebsocketHandler(api, Mod, Config);
+
+            api.RegisterCommand(
+                command: "me",
+                descriptionMsg: "a action",
+                syntaxMsg: "/me <text>",
+                handler: ActionCommandHandler
+            );
+            api.RegisterCommand(
+                command: "bridge",
+                descriptionMsg: "chatbridge controls",
+                syntaxMsg: "/bridge join|leave|list|listall",
+                handler: BridgeCommandHandler
+            );
+            api.RegisterCommand(
+                command: "bridgereload",
+                descriptionMsg: "reloads chat bridge",
+                syntaxMsg: "/bridgereload",
+                handler: BridgeReloadCommandHandler,
+                requiredPrivilege: "controlserver"
+            );
+
+            Api.Event.SaveGameLoaded += Event_SaveGameLoaded;
+            Api.Event.PlayerChat += Event_PlayerChat;
+
+            Api.Event.PlayerJoin += Event_PlayerJoin;
+            Api.Event.PlayerDisconnect += Event_PlayerDisconnect;
+
+            Api.Event.ServerRunPhase(EnumServerRunPhase.GameReady, Event_ServerStartup);
+            Api.Event.ServerRunPhase(EnumServerRunPhase.Shutdown, Event_ServerShutdown);
+
+            Api.Event.PlayerDeath += Event_PlayerDeath;
+        }
+
+        private void LoadConfig()
+        {
             try
             {
                 Config = api.LoadModConfig<ModConfig>(CONFIGNAME);
@@ -91,32 +129,6 @@ namespace Matterbridge
                     }
                 }
             }
-
-            WebsocketHandler = new WebsocketHandler(api, Mod, Config);
-
-            api.RegisterCommand(
-                command: "me",
-                descriptionMsg: "a action",
-                syntaxMsg: "/me <text>",
-                handler: ActionCommandHandler
-            );
-            api.RegisterCommand(
-                command: "bridge",
-                descriptionMsg: "chatbridge controls",
-                syntaxMsg: "/bridge join|leave|list|listall",
-                handler: BridgeCommandHandler
-            );
-
-            Api.Event.SaveGameLoaded += Event_SaveGameLoaded;
-            Api.Event.PlayerChat += Event_PlayerChat;
-
-            Api.Event.PlayerJoin += Event_PlayerJoin;
-            Api.Event.PlayerDisconnect += Event_PlayerDisconnect;
-
-            Api.Event.ServerRunPhase(EnumServerRunPhase.GameReady, Event_ServerStartup);
-            Api.Event.ServerRunPhase(EnumServerRunPhase.Shutdown, Event_ServerShutdown);
-
-            Api.Event.PlayerDeath += Event_PlayerDeath;
         }
 
         private void ActionCommandHandler(IServerPlayer player, int groupid, CmdArgs args)
@@ -223,6 +235,13 @@ namespace Matterbridge
                     break;
                 }
             }
+        }
+
+        private void BridgeReloadCommandHandler(IServerPlayer player, int groupid, CmdArgs args)
+        {
+            LoadConfig();
+            WebsocketHandler.Close(skipMessage: true);
+            WebsocketHandler.Connect();
         }
 
         private void Event_PlayerDeath(IServerPlayer byPlayer, DamageSource? damageSource)
@@ -361,7 +380,6 @@ namespace Matterbridge
                 );
             }
         }
-
 
         private void Event_SaveGameLoaded()
         {
