@@ -204,7 +204,7 @@ namespace Matterbridge
                 {
                     Api.SendMessageToGroup(
                         groupUid,
-                        $"{message.Gateway} <strong>{message.Username}</strong>: {message.Text.Replace(">", "&gt;").Replace("<", "&lt;")}",
+                        $"<strong>{message.Username}</strong>: {message.Text.Replace(">", "&gt;").Replace("<", "&lt;")}",
                         EnumChatType.OthersMessage
                     );
                     break;
@@ -213,7 +213,7 @@ namespace Matterbridge
                 {
                     Api.SendMessageToGroup(
                         groupUid,
-                        $"{message.Gateway} <strong>{message.Username}</strong> action: {message.Text.Replace(">", "&gt;").Replace("<", "&lt;")}",
+                        $"<strong>{message.Username}</strong> action: {message.Text.Replace(">", "&gt;").Replace("<", "&lt;")}",
                         EnumChatType.OthersMessage
                     );
                     break;
@@ -222,7 +222,7 @@ namespace Matterbridge
                 {
                     Api.SendMessageToGroup(
                         groupUid,
-                        $"{message.Gateway} <strong>{message.Username}</strong>: {message.Text.Replace(">", "&gt;").Replace("<", "&lt;")}",
+                        $"<strong>{message.Username}</strong>: {message.Text.Replace(">", "&gt;").Replace("<", "&lt;")}",
                         EnumChatType.OthersMessage
                     );
                     break;

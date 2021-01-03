@@ -32,9 +32,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-<!--
-		<None Include="src/**" CopyToOutputDirectory="PreserveNewest" />
--->
 		<None Include="assets/*" CopyToOutputDirectory="PreserveNewest" />
 		<None Include="modinfo.json" CopyToOutputDirectory="PreserveNewest" />
 		<None Include="modicon.png" CopyToOutputDirectory="PreserveNewest" />
