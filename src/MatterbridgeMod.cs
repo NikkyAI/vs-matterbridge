@@ -93,7 +93,7 @@ namespace Matterbridge
         {
             try
             {
-                Config = api.LoadModConfig<ModConfig>(CONFIGNAME);
+                Config = Api.LoadModConfig<ModConfig>(CONFIGNAME);
             }
             catch (Exception e)
             {
@@ -107,7 +107,7 @@ namespace Matterbridge
                 Config = new ModConfig();
             }
 
-            api.StoreModConfig(Config, CONFIGNAME);
+            Api.StoreModConfig(Config, CONFIGNAME);
 
             foreach (var entry in Config.ChannelMapping)
             {
