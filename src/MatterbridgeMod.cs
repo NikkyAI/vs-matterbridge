@@ -61,13 +61,15 @@ namespace Matterbridge
                 command: "me",
                 descriptionMsg: "a action",
                 syntaxMsg: "/me <text>",
-                handler: ActionCommandHandler
+                handler: ActionCommandHandler,
+                requiredPrivilege: "chat"
             );
             api.RegisterCommand(
                 command: "bridge",
                 descriptionMsg: "chatbridge controls",
                 syntaxMsg: "/bridge join|leave|list|listall",
-                handler: BridgeCommandHandler
+                handler: BridgeCommandHandler,
+                requiredPrivilege: "chat"
             );
             api.RegisterCommand(
                 command: "bridgereload",
@@ -76,7 +78,6 @@ namespace Matterbridge
                 handler: BridgeReloadCommandHandler,
                 requiredPrivilege: "controlserver"
             );
-            Api.Logger.Debug($"{Environment.OSVersion.Platform}");
 
             Api.Event.SaveGameLoaded += Event_SaveGameLoaded;
             Api.Event.PlayerChat += Event_PlayerChat;
