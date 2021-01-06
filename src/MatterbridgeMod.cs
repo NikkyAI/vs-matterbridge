@@ -144,8 +144,16 @@ namespace Matterbridge
         private void ActionCommandHandler(IServerPlayer player, int groupid, CmdArgs args)
         {
             var message = args.PopAll();
+            var cleanedMessage = message.Replace(">", "&gt;").Replace("<", "&lt;")
 
             Mod.Logger.Debug($"groupId: {groupid}");
+
+            Api.SendMessageToGroup(
+                groupid: groupid,
+                message: $"<i><strong>{player.PlayerName}</strong> {cleanedMessage}</i>",
+                chatType: EnumChatType.OwnMessage
+            );
+
             string gateway;
             if (groupid == GlobalConstants.GeneralChatGroup)
             {
@@ -164,12 +172,6 @@ namespace Matterbridge
                 gateway = entry.gateway;
             }
 
-            Api.SendMessageToGroup(
-                groupid: groupid,
-                message:
-                $"<i><strong>{player.PlayerName}</strong> {message.Replace(">", "&gt;").Replace("<", "&lt;")}</i>",
-                chatType: EnumChatType.OwnMessage
-            );
             WebsocketHandler.SendMessage(player.PlayerName, message, gateway, ApiMessage.EventUserAction);
         }
 
@@ -342,16 +344,31 @@ namespace Matterbridge
             {
                 data.CustomPlayerData[PLAYERDATA_LASTSEENKEY] = DateTime.UtcNow.ToString(CultureInfo.CurrentCulture);
 
+                TimeSpan totalPlaytime;
                 if (data.CustomPlayerData.TryGetValue(PLAYERDATA_TOTALPLAYTIMEKEY, out var totalPlaytimeString))
                 {
-                    data.CustomPlayerData[PLAYERDATA_TOTALPLAYTIMEKEY] =
-                        (timePlayed + TimeSpan.Parse(totalPlaytimeString)).ToString();
+                    try
+                    {
+                        totalPlaytime = TimeSpan.Parse(totalPlaytimeString)
+                    }
+                    catch (FormatException e)
+                    {
+                        Mod.Logger.Error("error parsing timespan: {0}, {1}", totalPlaytimeString, e);
+                        totalPlaytime = TimeSpan.Zero;
+                    }
                 }
+                else
+                {
+                    totalPlaytime = TimeSpan.Zero;
+                }
+                data.CustomPlayerData[PLAYERDATA_TOTALPLAYTIMEKEY] = 
+                    (timePlayed + totalPlaytime).ToString();
 
                 data.CustomPlayerData[PLAYERDATA_TOTALPLAYTIMEKEY] = timePlayed.ToString();
             }
 
-            ConnectTimeDict.Remove(byPlayer.PlayerUID);
+            var removed = ConnectTimeDict.Remove(byPlayer.PlayerUID);
+            Mod.Logger.Debug("ConnectTimeDict.remove(\"{0}\")", byPlayer.PlayerUID);
 
             if (Config.SendPlayerJoinLeaveEvents)
             {
@@ -368,6 +385,10 @@ namespace Matterbridge
 
         private void Event_PlayerJoin(IServerPlayer byPlayer)
         {
+            if (ConnectTimeDict.ContainsKey(byPlayer.PlayerUID))
+            {
+                ConnectTimeDict.Remove(byPlayer.PlayerUID);
+            }
             ConnectTimeDict.Add(byPlayer.PlayerUID, DateTime.UtcNow);
 
             // this forces autojoin groups

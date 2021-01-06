@@ -198,13 +198,15 @@ namespace Matterbridge
                 groupUid = group.Uid;
             }
 
+            var cleanedMessageText = message.Text.Replace(">", "&gt;").Replace("<", "&lt;");
+
             switch (message.Event)
             {
                 case ApiMessage.EventJoinLeave:
                 {
                     Api.SendMessageToGroup(
                         groupUid,
-                        $"<strong>{message.Username}</strong>: {message.Text.Replace(">", "&gt;").Replace("<", "&lt;")}",
+                        $"<strong>{message.Username}</strong>: {cleanedMessageText}",
                         EnumChatType.OthersMessage
                     );
                     break;
@@ -213,7 +215,7 @@ namespace Matterbridge
                 {
                     Api.SendMessageToGroup(
                         groupUid,
-                        $"<strong>{message.Username}</strong> action: {message.Text.Replace(">", "&gt;").Replace("<", "&lt;")}",
+                        $"<strong>{message.Username}</strong> <i>{cleanedMessageText}</i>",
                         EnumChatType.OthersMessage
                     );
                     break;
@@ -222,7 +224,7 @@ namespace Matterbridge
                 {
                     Api.SendMessageToGroup(
                         groupUid,
-                        $"<strong>{message.Username}</strong>: {message.Text.Replace(">", "&gt;").Replace("<", "&lt;")}",
+                        $"<strong>{message.Username}</strong>: {cleanedMessageText}",
                         EnumChatType.OthersMessage
                     );
                     break;
@@ -233,12 +235,6 @@ namespace Matterbridge
                     break;
                 }
             }
-
-            // api.SendMessageToGroup(
-            //     GlobalConstants.GeneralChatGroup,
-            //     $"{message.gateway} <strong>{message.username}</strong>: {message.text.Replace(">", "&gt;").Replace("<", "&lt;")}",
-            //     EnumChatType.OthersMessage
-            // );
         }
     }
 }
