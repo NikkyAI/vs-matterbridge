@@ -69,7 +69,7 @@ namespace Matterbridge
             api.RegisterCommand(
                 command: "bridge",
                 descriptionMsg: "chatbridge controls",
-                syntaxMsg: "/bridge join|leave|list|listall",
+                syntaxMsg: "/bridge join|leave|list|listall|version",
                 handler: BridgeCommandHandler,
                 requiredPrivilege: "chat"
             );
@@ -144,7 +144,7 @@ namespace Matterbridge
         private void ActionCommandHandler(IServerPlayer player, int groupid, CmdArgs args)
         {
             var message = args.PopAll();
-            var cleanedMessage = message.Replace(">", "&gt;").Replace("<", "&lt;")
+            var cleanedMessage = message.Replace(">", "&gt;").Replace("<", "&lt;");
 
             Mod.Logger.Debug($"groupId: {groupid}");
 
@@ -241,9 +241,18 @@ namespace Matterbridge
                         EnumChatType.Notification);
                     break;
                 }
+                case "version":
+                {
+                    player.SendMessage(
+                        groupid, 
+                        $"{Mod.Info.Name} version {Mod.Info.Version}",
+                        EnumChatType.Notification
+                    );
+                    break;
+                }
                 default:
                 {
-                    player.SendMessage(groupid, $"unknown subcommand {arg0}", EnumChatType.Notification);
+                    player.SendMessage(groupid, $"unknown subcommand {arg0}\n available: join|leave|list|listall|version", EnumChatType.Notification);
                     break;
                 }
             }
@@ -349,7 +358,7 @@ namespace Matterbridge
                 {
                     try
                     {
-                        totalPlaytime = TimeSpan.Parse(totalPlaytimeString)
+                        totalPlaytime = TimeSpan.Parse(totalPlaytimeString);
                     }
                     catch (FormatException e)
                     {
