@@ -19,14 +19,14 @@ jobs:
         run: |
           mkdir bin
           mkdir bin/vs_server
-          wget https://cdn.vintagestory.at/gamefiles/stable/vs_server_1.14.2.tar.gz --quiet -O bin/vs_server.tar.gz
+          wget https://cdn.vintagestory.at/gamefiles/stable/vs_server_1.14.5.tar.gz --quiet -O bin/vs_server.tar.gz
           tar -xf bin/vs_server.tar.gz -C bin/vs_server/
           echo "VINTAGE_STORY=bin/vs_server" >> $GITHUB_ENV
-      - run: dotnet build
+      - run: dotnet msbuild -target:build -property:Configuration=Release
       - name: Set enviroment for github-release
         run: |
           echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV
-          echo "VERSION=$(cat bin/Debug/Generated/modinfo.json | jq -r .version)" >> $GITHUB_ENV
+          echo "VERSION=$(cat .generated/modinfo.json | jq -r .version)" >> $GITHUB_ENV
       - name: Set enviroment RELEASE_TAG
         run: |
           echo "RELEASE_TAG=snapshot/${{ env.VERSION }}-${{ env.BRANCH }}-$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
@@ -46,4 +46,4 @@ jobs:
           body: Snapshot Release ${{ env.VERSION }}
           gzip: folders
           files: >
-            Matterbridge.zip:bin/Matterbridge.zip
+            Matterbridge_${{ env.VERSION }}.zip:bin/Matterbridge.zip

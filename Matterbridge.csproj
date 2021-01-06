@@ -1,4 +1,4 @@
-<Project ToolsVersion="16" Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<TargetFramework>net452</TargetFramework>
 		<LangVersion>8.0</LangVersion>
@@ -46,18 +46,18 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="bin\Debug\Generated\**\*.*">
+		<None Include=".generated\**\*.*">
 			<Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
 
-	<Target Name="GenerateResource" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Debug'">
+	<Target Name="GenerateResource" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
 		<Delete Files="bin\Debug\Generated\**\*.*" />
-		<GenerateModinfo InputFilename="modinfo.json" OutputFilename="bin\Debug\Generated\modinfo.json" Version="$(Version)" Description="$(Description)" Name="$(AssemblyTitle)" Author="$(Authors)" Website="$(WebPage)" />
-		<Message Importance="High" Text="generated bin\Debug\Generated\modinfo.json" />
+		<GenerateModinfo InputFilename="modinfo.json" OutputFilename=".generated\modinfo.json" Version="$(Version)" Description="$(Description)" Name="$(AssemblyTitle)" Author="$(Authors)" Website="$(WebPage)" />
+		<Message Importance="High" Text="generated bin\Release\Generated\modinfo.json" />
 	</Target>
-	<Target Name="Package" AfterTargets="PostBuildEvent;GenerateResource" Condition="'$(Configuration)' == 'Debug'">
+	<Target Name="Package" AfterTargets="PostBuildEvent;GenerateResource" Condition="'$(Configuration)' == 'Release'">
 		<!--		<Message>version: %(Version)</Message>-->
 		<ZipDirectory DestinationFile="bin/$(TargetName).zip" SourceDirectory="$(TargetDir)" Overwrite="true" />
 	</Target>

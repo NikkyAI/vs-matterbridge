@@ -1,4 +1,4 @@
-# Matterbridge API link for Vintage Story Server
+# Matterbridge API Connector for Vintage Story Server
 
 this mod is serverside **ONLY**
 and you need to run a matterbridge: [https://github.com/42wim/matterbridge](https://github.com/42wim/matterbridge)
