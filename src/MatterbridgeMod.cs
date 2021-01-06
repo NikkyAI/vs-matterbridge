@@ -37,7 +37,7 @@ namespace Matterbridge
             set => _config = value;
         }
 
-        private WebsocketHandler WebsocketHandler
+        private static WebsocketHandler WebsocketHandler
         {
             get => _websocketHandler ?? throw new NullReferenceException("websocket handler is not initialized yet");
             set => _websocketHandler = value;
@@ -48,6 +48,8 @@ namespace Matterbridge
         private SystemTemporalStability? _temporalSystem;
 
         private static readonly Dictionary<string, DateTime> ConnectTimeDict = new Dictionary<string, DateTime>();
+
+        public override bool AllowRuntimeReload => true;
 
         public override void StartServerSide(ICoreServerAPI api)
         {
@@ -89,6 +91,12 @@ namespace Matterbridge
             Api.Event.ServerRunPhase(EnumServerRunPhase.Shutdown, Event_ServerShutdown);
 
             Api.Event.PlayerDeath += Event_PlayerDeath;
+        }
+
+        public override void Dispose()
+        {
+            WebsocketHandler.Close();
+            base.Dispose();
         }
 
         private void LoadConfig()

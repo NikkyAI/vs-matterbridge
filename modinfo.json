@@ -1,12 +1,12 @@
 {
   "type": "code",
-  "name": "Matterbridge API Connector",
-  "modid": "matterbridge",
-  "version": "0.0.3",
+  "name": "$Name$",
+  "modid": "$Modid$",
+  "version": "$Version$",
 
-  "description" : "A matterbridge api connector for VS server",
+  "description" : "$Description$",
   "website": "https://github.com/NikkyAI/vs-matterbridge",
-  "authors": [ "Nikky" ],
+  "authors": [ "$Author$" ],
 
   "side": "Server",
   "requiredOnClient": false,
