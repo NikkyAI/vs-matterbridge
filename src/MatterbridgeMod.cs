@@ -256,8 +256,8 @@ namespace Matterbridge
 
         private void Event_PlayerDeath(IServerPlayer byPlayer, DamageSource? damageSource)
         {
-            // var deathMessage = (byPlayer?.PlayerName ?? "Unknown player") + " ";
-            var deathMessage = "";
+            var deathMessage = (byPlayer?.PlayerName ?? "Unknown player") + " ";
+            // var deathMessage = "";
             if (damageSource == null)
                 deathMessage += "was killed by the unknown.";
             else
@@ -315,10 +315,10 @@ namespace Matterbridge
             if (Config.SendPlayerDeathEvents)
             {
                 WebsocketHandler.SendMessage(
-                    username: byPlayer.PlayerName,
+                    username: "system",
                     text: deathMessage,
                     @event: ApiMessage.EventUserAction,
-                    account: byPlayer.PlayerUID,
+                    // account: byPlayer.PlayerUID,
                     gateway: Config.generalGateway
                 );
             }

@@ -46,16 +46,16 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<None Include="bin\Generated\**\*.*">
+		<None Include="bin\Debug\Generated\**\*.*">
 			<Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
 	</ItemGroup>
 
 	<Target Name="GenerateResource" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Debug'">
-		<Delete Files="bin\Generated\**\*.*" />
-		<GenerateModinfo InputFilename="modinfo.json" OutputFilename="bin\Generated\modinfo.json" Version="$(Version)" Description="$(Description)" Name="$(AssemblyTitle)" Author="$(Authors)" Website="$(WebPage)" />
-		<Message Importance="High" Text="generated bin\Generated\modinfo.json" />
+		<Delete Files="bin\Debug\Generated\**\*.*" />
+		<GenerateModinfo InputFilename="modinfo.json" OutputFilename="bin\Debug\Generated\modinfo.json" Version="$(Version)" Description="$(Description)" Name="$(AssemblyTitle)" Author="$(Authors)" Website="$(WebPage)" />
+		<Message Importance="High" Text="generated bin\Debug\Generated\modinfo.json" />
 	</Target>
 	<Target Name="Package" AfterTargets="PostBuildEvent;GenerateResource" Condition="'$(Configuration)' == 'Debug'">
 		<!--		<Message>version: %(Version)</Message>-->
