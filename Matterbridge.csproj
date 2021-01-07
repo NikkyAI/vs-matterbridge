@@ -5,7 +5,7 @@
 		<Nullable>enable</Nullable>
 
 		<AssemblyTitle>Matterbridge API Connector</AssemblyTitle>
-		<Version>0.0.4</Version>
+		<Version>0.0.5</Version>
 
 		<Description>A matterbridge api connector for VS server</Description>
 		<Authors>NikkyAI</Authors>
@@ -58,18 +58,16 @@
 		</None>
 	</ItemGroup>
 
-	<Target Name="GenerateResource" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
-<!--
+	<Target Name="GenerateResource" AfterTargets="PostBuildEvent">
 		<Delete Files=".generated\**\*.*" />
 		<GenerateModinfo InputFilename="modinfo.json" OutputFilename=".generated\modinfo.json" Modid="$(AssemblyName)" Version="$(Version)" Description="$(Description)" Name="$(AssemblyTitle)" Author="$(Authors)" Website="$(WebPage)" />
 		<Message Importance="High" Text="generated .generated\modinfo.json" />
--->		
 	</Target>
 
-	<Target Name="Package" AfterTargets="PostBuildEvent;GenerateResource" Condition="'$(Configuration)' == 'Release'">
+	<Target Name="Package" AfterTargets="PostBuildEvent;GenerateResource">
 		<ZipDirectory DestinationFile="bin/$(TargetName).zip" SourceDirectory="$(TargetDir)" Overwrite="true" />
 	</Target>
-<!--
+
 	<UsingTask TaskName="GenerateModinfo" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
 		<ParameterGroup>
 			<InputFilename ParameterType="System.String" Required="true" />
@@ -103,5 +101,4 @@
 			</Code>
 		</Task>
 	</UsingTask>
--->
 </Project>

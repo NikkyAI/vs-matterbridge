@@ -23,6 +23,9 @@ jobs:
           tar -xf bin/vs_server.tar.gz -C bin/vs_server/
           echo "VINTAGE_STORY=bin/vs_server" >> $GITHUB_ENV
       - run: dotnet build -target:build -property:Configuration=Release
+      - run: |
+          cat .generated/modinfo.json
+          cat bin/Release/net452/modinfo.json
       - name: Set enviroment for github-release
         run: |
           echo "BRANCH=${GITHUB_REF##*/}" >> $GITHUB_ENV

@@ -10,11 +10,13 @@
   "ChannelMapping": [
     {
       "groupName": "twitch copygirl",
-      "gateway": "twitch_copygirl"
+      "gateway": "twitch_copygirl",
+      "isPrivate": false
     },
     {
       "groupName": "twitch lunarlight",
-      "gateway": "twitch_lunarlight"
+      "gateway": "twitch_lunarlight",
+      "isPrivate": false
     }
   ],
   "TEXT_StormEarlyWarning": "It appears a {strength} storm is coming...",

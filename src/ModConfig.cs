@@ -29,11 +29,13 @@ namespace Matterbridge
     {
         public readonly string groupName;
         public readonly string gateway;
+        public readonly bool isPrivate;
 
-        public ChannelMappingEntry(string groupName, string gateway)
+        public ChannelMappingEntry(string groupName, string gateway, bool isPrivate)
         {
             this.groupName = groupName;
             this.gateway = gateway;
+            this.isPrivate = isPrivate;
         }
     }
 }

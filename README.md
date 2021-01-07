@@ -52,7 +52,8 @@ example:
   "ChannelMapping": [
     {
       "groupName": "announcements",
-      "gateway": "announcements"
+      "gateway": "announcements",
+      "isPrivate": false
     }
   ]
 }
@@ -60,6 +61,7 @@ example:
 
 `groupName` is the group name in VS, the groups are created automatically
 `gateway` is matching `gateway.name` in the matterbridge config (see: [Gateway config (basic)](https://github.com/42wim/matterbridge/wiki/Gateway-config-%28basic%29))
+`isPrivate` controls if people can use `/bridge join|leave` and listing the
 
 #### `string` TEXT_*
 

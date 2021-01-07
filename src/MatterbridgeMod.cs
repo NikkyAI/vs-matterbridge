@@ -121,6 +121,7 @@ namespace Matterbridge
 
             foreach (var entry in Config.ChannelMapping)
             {
+                Api.Logger.Debug($"{entry.gateway} {entry.groupName} {entry.isPrivate}");
                 foreach (var otherEntry in Config.ChannelMapping)
                 {
                     if (entry.groupName == otherEntry.groupName && entry.gateway != otherEntry.gateway)
@@ -184,7 +185,7 @@ namespace Matterbridge
                 {
                     var gateway = args.PopWord();
                     var entry = Config.ChannelMapping.FirstOrDefault(e => e.gateway == gateway);
-                    if (entry == null)
+                    if (entry == null || entry.isPrivate)
                     {
                         player.SendMessage(groupid, $"no entry found matching: {gateway}", EnumChatType.Notification);
                         return;
@@ -201,7 +202,7 @@ namespace Matterbridge
                 {
                     var gateway = args.PopWord();
                     var entry = Config.ChannelMapping.FirstOrDefault(e => e.gateway == gateway);
-                    if (entry == null)
+                    if (entry == null || entry.isPrivate)
                     {
                         player.SendMessage(groupid, $"no entry found matching: {gateway}", EnumChatType.Notification);
                         return;
@@ -217,6 +218,7 @@ namespace Matterbridge
                 case "list":
                 {
                     var groupNames = Config.ChannelMapping
+                        .Where(entry => !entry.isPrivate)
                         .Where(entry =>
                             {
                                 var group = Api.Groups.GetOrCreate(Api, entry.groupName);
@@ -235,6 +237,7 @@ namespace Matterbridge
                 case "listall":
                 {
                     var groupNames = Config.ChannelMapping
+                        .Where(entry => !entry.isPrivate)
                         .Select(entry => entry.gateway)
                         .ToList();
                     player.SendMessage(groupid, $"bridges: \n  {string.Join("\n  ", groupNames)}",
