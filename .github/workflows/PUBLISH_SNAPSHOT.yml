@@ -46,4 +46,4 @@ jobs:
           body: Snapshot Release ${{ env.VERSION }}
           gzip: folders
           files: >
-            Matterbridge_${{ env.VERSION }}.zip:bin/Matterbridge.zip
+            Matterbridge-${{ env.VERSION }}-$GITHUB_RUN_NUMBER.zip:bin/Matterbridge.zip
