@@ -30,6 +30,7 @@ jobs:
       - name: Set enviroment RELEASE_TAG
         run: |
           echo "RELEASE_TAG=snapshot/${{ env.VERSION }}-${{ env.BRANCH }}-$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
+          echo "FILE_VERSION=${{ env.VERSION }}-${{ env.BRANCH }}-$GITHUB_RUN_NUMBER" >> $GITHUB_ENV
       - name: print env
         run: |
           echo "BRANCH=${{ env.BRANCH }}"
@@ -46,4 +47,4 @@ jobs:
           body: Snapshot Release ${{ env.VERSION }}
           gzip: folders
           files: >
-            Matterbridge-${{ env.VERSION }}-$GITHUB_RUN_NUMBER.zip:bin/Matterbridge.zip
+            Matterbridge-${{ env.FILE_VERSION }}.zip:bin/Matterbridge.zip
