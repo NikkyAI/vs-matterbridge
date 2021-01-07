@@ -1,0 +1,18 @@
+{
+  "type": "code",
+  "name": "Matterbridge API Connector",
+  "modid": "matterbridge",
+  "version": "0.0.4",
+
+  "description" : "A matterbridge api connector for VS server",
+  "website": "https://github.com/NikkyAI/vs-matterbridge",
+  "authors": [ "NikkyAI" ],
+
+  "side": "Server",
+  "requiredOnClient": false,
+
+  "dependencies": {
+    "game": "1.8.0",
+    "survival": ""
+  }
+}

@@ -32,7 +32,7 @@
 		</Reference>
 -->
 	</ItemGroup>
-	
+
 	<ItemGroup>
 	  	<PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
 		<PackageReference Include="WebSocket4Net" Version="0.15.2" />
@@ -43,6 +43,12 @@
 			<Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
+		<None Update=".generated\modinfo.json">
+		  <Link>resources\modinfo.json</Link>
+		</None>
+		<None Update=".generated\modinfo.json">
+		  <Link>resources\modinfo.json</Link>
+		</None>
 	</ItemGroup>
 
 	<ItemGroup>
@@ -52,13 +58,14 @@
 		</None>
 	</ItemGroup>
 
+<!--
 	<Target Name="GenerateResource" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
-		<Delete Files="bin\Debug\Generated\**\*.*" />
-		<GenerateModinfo InputFilename="modinfo.json" OutputFilename=".generated\modinfo.json" Version="$(Version)" Description="$(Description)" Name="$(AssemblyTitle)" Author="$(Authors)" Website="$(WebPage)" />
-		<Message Importance="High" Text="generated bin\Release\Generated\modinfo.json" />
+		<Delete Files=".generated\**\*.*" />
+		<GenerateModinfo InputFilename="modinfo.json" OutputFilename=".generated\modinfo.json" Modid="$(AssemblyName)" Version="$(Version)" Description="$(Description)" Name="$(AssemblyTitle)" Author="$(Authors)" Website="$(WebPage)" />
+		<Message Importance="High" Text="generated .generated\modinfo.json" />
 	</Target>
 	<Target Name="Package" AfterTargets="PostBuildEvent;GenerateResource" Condition="'$(Configuration)' == 'Release'">
-		<!--		<Message>version: %(Version)</Message>-->
+		&lt;!&ndash;		<Message>version: %(Version)</Message>&ndash;&gt;
 		<ZipDirectory DestinationFile="bin/$(TargetName).zip" SourceDirectory="$(TargetDir)" Overwrite="true" />
 	</Target>
 
@@ -68,6 +75,7 @@
 			<OutputFilename ParameterType="System.String" Required="true" />
 			<Version ParameterType="System.String" Required="true" />
 			<Name ParameterType="System.String" Required="true" />
+			<Modid ParameterType="System.String" Required="true" />
 			<Description ParameterType="System.String" Required="true" />
 			<Author ParameterType="System.String" Required="true" />
 			<Website ParameterType="System.String" Required="true" />
@@ -83,7 +91,7 @@
            	    .Replace("$Version$", Version)
            	    .Replace("$Description$", Description)
            	    .Replace("$Name$", Name)
-           	    .Replace("$Modid$", Name)
+           	    .Replace("$Modid$", Modid.ToLower())
            	    .Replace("$Author$", Author)
            	    .Replace("$Website$", Website);
 			File.WriteAllText(
@@ -94,4 +102,5 @@
 			</Code>
 		</Task>
 	</UsingTask>
+-->
 </Project>
