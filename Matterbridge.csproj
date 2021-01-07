@@ -58,17 +58,18 @@
 		</None>
 	</ItemGroup>
 
-<!--
 	<Target Name="GenerateResource" AfterTargets="PostBuildEvent" Condition="'$(Configuration)' == 'Release'">
+<!--
 		<Delete Files=".generated\**\*.*" />
 		<GenerateModinfo InputFilename="modinfo.json" OutputFilename=".generated\modinfo.json" Modid="$(AssemblyName)" Version="$(Version)" Description="$(Description)" Name="$(AssemblyTitle)" Author="$(Authors)" Website="$(WebPage)" />
 		<Message Importance="High" Text="generated .generated\modinfo.json" />
-	</Target>
-	<Target Name="Package" AfterTargets="PostBuildEvent;GenerateResource" Condition="'$(Configuration)' == 'Release'">
-		&lt;!&ndash;		<Message>version: %(Version)</Message>&ndash;&gt;
-		<ZipDirectory DestinationFile="bin/$(TargetName).zip" SourceDirectory="$(TargetDir)" Overwrite="true" />
+-->		
 	</Target>
 
+	<Target Name="Package" AfterTargets="PostBuildEvent;GenerateResource" Condition="'$(Configuration)' == 'Release'">
+		<ZipDirectory DestinationFile="bin/$(TargetName).zip" SourceDirectory="$(TargetDir)" Overwrite="true" />
+	</Target>
+<!--
 	<UsingTask TaskName="GenerateModinfo" TaskFactory="RoslynCodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.Core.dll">
 		<ParameterGroup>
 			<InputFilename ParameterType="System.String" Required="true" />
