@@ -43,12 +43,6 @@
 			<Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
 			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
 		</None>
-		<None Update=".generated\modinfo.json">
-		  <Link>resources\modinfo.json</Link>
-		</None>
-		<None Update=".generated\modinfo.json">
-		  <Link>resources\modinfo.json</Link>
-		</None>
 	</ItemGroup>
 
 	<ItemGroup>
