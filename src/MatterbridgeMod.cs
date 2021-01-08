@@ -95,7 +95,7 @@ namespace Matterbridge
 
         public override void Dispose()
         {
-            WebsocketHandler.Close();
+            WebsocketHandler.Dispose();
             base.Dispose();
         }
 

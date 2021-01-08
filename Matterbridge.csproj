@@ -31,10 +31,17 @@
 			<Private>False</Private>
 		</Reference>
 -->
+		<Reference Include="Newtonsoft.Json">
+			<HintPath>$(VINTAGE_STORY)/Lib/Newtonsoft.Json.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="websocket-sharp">
+			<HintPath>$(VINTAGE_STORY)/Lib/websocket-sharp.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
 	</ItemGroup>
 
 	<ItemGroup>
-	  	<PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
 		<PackageReference Include="WebSocket4Net" Version="0.15.2" />
 	</ItemGroup>
 

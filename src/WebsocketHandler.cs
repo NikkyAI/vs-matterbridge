@@ -11,7 +11,7 @@ using WebSocket4Net;
 
 namespace Matterbridge
 {
-    internal class WebsocketHandler
+    internal class WebsocketHandler : IDisposable
     {
         private readonly ICoreServerAPI _api;
         private readonly Mod _mod;
@@ -234,6 +234,15 @@ namespace Matterbridge
                     Mod.Logger.Error("unhandled event type {0}", message.Event);
                     break;
                 }
+            }
+        }
+
+        public void Dispose()
+        {
+            if (_websocket != null)
+            {
+                _websocket.Close();
+                ((IDisposable) _websocket).Dispose();
             }
         }
     }

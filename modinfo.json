@@ -5,7 +5,7 @@
   "version": "$Version$",
 
   "description" : "$Description$",
-  "website": "https://github.com/NikkyAI/vs-matterbridge",
+  "website": "$Website$",
   "authors": [ "$Author$" ],
 
   "side": "Server",
