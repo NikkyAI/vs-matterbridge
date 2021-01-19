@@ -31,11 +31,7 @@ namespace Matterbridge
             set => _api = value;
         }
 
-        private static ModConfig Config
-        {
-            get => _config ?? throw new NullReferenceException("config is not initialized yet");
-            set => _config = value;
-        }
+        private static ModConfig Config => _config ?? throw new NullReferenceException("config is not initialized yet");
 
         private static WebsocketHandler WebsocketHandler
         {
@@ -103,7 +99,7 @@ namespace Matterbridge
         {
             try
             {
-                Config = Api.LoadModConfig<ModConfig>(CONFIGNAME);
+                _config = Api.LoadModConfig<ModConfig>(CONFIGNAME);
             }
             catch (Exception e)
             {
@@ -111,18 +107,18 @@ namespace Matterbridge
                 return;
             }
 
-            if (Config == null)
+            if (_config == null)
             {
                 Mod.Logger.Notification($"non-existant modconfig at 'ModConfig/{CONFIGNAME}', creating default...");
-                Config = new ModConfig();
+                _config = new ModConfig();
             }
 
             Api.StoreModConfig(Config, CONFIGNAME);
 
-            foreach (var entry in Config.ChannelMapping)
+            foreach (var entry in _config.ChannelMapping)
             {
                 Api.Logger.Debug($"{entry.gateway} {entry.groupName} {entry.isPrivate}");
-                foreach (var otherEntry in Config.ChannelMapping)
+                foreach (var otherEntry in _config.ChannelMapping)
                 {
                     if (entry.groupName == otherEntry.groupName && entry.gateway != otherEntry.gateway)
                     {
