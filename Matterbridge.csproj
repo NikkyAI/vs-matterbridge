@@ -59,13 +59,13 @@
 		</None>
 	</ItemGroup>
 
-	<Target Name="GenerateResource" AfterTargets="PostBuildEvent">
+	<Target Name="GenerateResource" BeforeTargets="BeforeBuild">
 		<Delete Files=".generated\**\*.*" />
 		<GenerateModinfo InputFilename="modinfo.json" OutputFilename=".generated/modinfo.json" Modid="$(AssemblyName)" Version="$(Version)" Description="$(Description)" Name="$(AssemblyTitle)" Author="$(Authors)" Website="$(WebPage)" />
 		<Message Importance="High" Text="generated .generated/modinfo.json" />
 	</Target>
 
-	<Target Name="Package" AfterTargets="PostBuildEvent;GenerateResource">
+	<Target Name="Package" AfterTargets="PostBuildEvent">
 		<ZipDirectory DestinationFile="bin/$(TargetName).zip" SourceDirectory="$(TargetDir)" Overwrite="true" />
 	</Target>
 
