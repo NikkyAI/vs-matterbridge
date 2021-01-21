@@ -7,6 +7,8 @@
   "SendStormNotification": true,
   "SendStormEarlyNotification": true,
   "generalGateway": "main",
+  "systemUsername": "system",
+  "systemAvatar": "",
   "ChannelMapping": [
     {
       "groupName": "announcements",

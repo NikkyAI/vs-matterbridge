@@ -6,6 +6,8 @@
   "SendPlayerDeathEvents": true,
   "SendStormNotification": true,
   "SendStormEarlyNotification": true,
+  "systemUsername": "system",
+  "systemAvatar": "",
   "generalGateway": "general",
   "ChannelMapping": [
     {

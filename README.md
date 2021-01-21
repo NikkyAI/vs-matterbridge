@@ -42,6 +42,18 @@ announces storm events
 
 main gateway for status updates and linking to general chat
 
+#### `string` systemUsername
+
+default: `"system"`
+username for the announcer system
+
+#### `string` systemAvatar
+
+default: `""`
+url to avatar of announcer system
+empty string will not set it (will use defult avatar of bots on discord or slack)
+will only be displayed on things that support it (discord webhooks for example)
+
 #### `List<ChannelMappingEntry>` ChannelMapping
 
 mapping of group names to gateways
