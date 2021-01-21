@@ -79,4 +79,14 @@ in = [
 out = [
     { account="api.vintagestory", channel="api" }
 ]
+
+[[gateway]]
+name="twitch_kainei"
+enable=true
+in = [
+    { account="irc.twitch", channel="#kainei" }
+]
+out = [
+    { account="api.vintagestory", channel="api" }
+]
     

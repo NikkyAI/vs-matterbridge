@@ -169,7 +169,12 @@ namespace Matterbridge
                 gateway = entry.gateway;
             }
 
-            WebsocketHandler.SendMessage(player.PlayerName, message, gateway, ApiMessage.EventUserAction);
+            WebsocketHandler.SendUserMessage(
+                player: player, 
+                text: message, 
+                gateway: gateway,
+                @event: ApiMessage.EventUserAction
+            );
         }
 
         private void BridgeCommandHandler(IServerPlayer player, int groupid, CmdArgs args)
@@ -266,8 +271,8 @@ namespace Matterbridge
 
         private void Event_PlayerDeath(IServerPlayer byPlayer, DamageSource? damageSource)
         {
-            var deathMessage = (byPlayer?.PlayerName ?? "Unknown player") + " ";
-            // var deathMessage = "";
+            // var deathMessage = (byPlayer?.PlayerName ?? "Unknown player") + " ";
+            var deathMessage = "";
             if (damageSource == null)
                 deathMessage += "was killed by the unknown.";
             else
@@ -312,7 +317,7 @@ namespace Matterbridge
                         "locust" => "by a locust.",
                         "drifter" => "by a drifter.",
                         "beemob" => "by a swarm of bees.",
-                        _ => "by a monster."
+                        _ => $"by a monster. ({damageSource.SourceEntity.Code.Path})" // TODO: add section to config
                     },
                     EnumDamageSource.Explosion => "when they stood by a bomb.",
                     EnumDamageSource.Machine => "when they got their hands stuck in a machine.",
@@ -324,8 +329,8 @@ namespace Matterbridge
 
             if (Config.SendPlayerDeathEvents)
             {
-                WebsocketHandler.SendMessage(
-                    username: "system",
+                WebsocketHandler.SendUserMessage(
+                    player: byPlayer,
                     text: deathMessage,
                     @event: ApiMessage.EventUserAction,
                     // account: byPlayer.PlayerUID,
@@ -380,8 +385,7 @@ namespace Matterbridge
 
             if (Config.SendPlayerJoinLeaveEvents)
             {
-                WebsocketHandler.SendMessage(
-                    username: "system",
+                WebsocketHandler.SendSystemMessage(
                     text: $"{byPlayer.PlayerName} has disconnected from the server! " +
                           // $"played for {timePlayed} " +
                           $"({Api.Server.Players.Count(x => x.PlayerUID != byPlayer.PlayerUID && x.ConnectionState == EnumClientState.Playing)}/{Api.Server.Config.MaxClients})",
@@ -409,13 +413,13 @@ namespace Matterbridge
 
             if (Config.SendPlayerJoinLeaveEvents)
             {
-                WebsocketHandler.SendMessage(
-                    username: "system",
+                WebsocketHandler.SendSystemMessage(
+                    // username: "system",
                     text: $"{byPlayer.PlayerName} has connected to the server! " +
                           $"({Api.Server.Players.Count(x => x.ConnectionState != EnumClientState.Offline)}/{Api.Server.Config.MaxClients})",
                     gateway: Config.generalGateway,
-                    @event: ApiMessage.EventJoinLeave,
-                    account: byPlayer.PlayerUID
+                    @event: ApiMessage.EventJoinLeave
+                    // account: byPlayer.PlayerUID
                 );
             }
         }
@@ -441,8 +445,7 @@ namespace Matterbridge
 
             if (_lastData?.stormDayNotify > 1 && data.stormDayNotify == 1 && Config.SendStormEarlyNotification)
             {
-                WebsocketHandler.SendMessage(
-                    username: "system",
+                WebsocketHandler.SendSystemMessage(
                     text: Config.TEXT_StormEarlyWarning.Replace("{strength}",
                         data.nextStormStrength.ToString().ToLower()),
                     gateway: Config.generalGateway
@@ -451,8 +454,7 @@ namespace Matterbridge
 
             if (_lastData?.stormDayNotify == 1 && data.stormDayNotify == 0)
             {
-                WebsocketHandler.SendMessage(
-                    username: "system",
+                WebsocketHandler.SendSystemMessage(
                     text: Config.TEXT_StormBegin.Replace("{strength}", data.nextStormStrength.ToString().ToLower()),
                     gateway: Config.generalGateway
                 );
@@ -461,8 +463,7 @@ namespace Matterbridge
             //double activeDaysLeft = data.stormActiveTotalDays - api.World.Calendar.TotalDays;
             if (_lastData?.stormDayNotify == 0 && data.stormDayNotify != 0)
             {
-                WebsocketHandler.SendMessage(
-                    username: "system",
+                WebsocketHandler.SendSystemMessage(
                     text: Config.TEXT_StormEnd.Replace("{strength}", data.nextStormStrength.ToString().ToLower()),
                     gateway: Config.generalGateway
                 );
@@ -499,10 +500,9 @@ namespace Matterbridge
             Mod.Logger.Debug($"data: {data}");
             Mod.Logger.Chat($"**{byPlayer.PlayerName}**: {foundText.Groups[1].Value}");
 
-            WebsocketHandler.SendMessage(
-                username: byPlayer.PlayerName,
+            WebsocketHandler.SendUserMessage(
+                player: byPlayer,
                 text: foundText.Groups[1].Value,
-                account: byPlayer.PlayerUID,
                 gateway: gateway
             );
         }

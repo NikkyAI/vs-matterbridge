@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Newtonsoft.Json;
-using SuperSocket.ClientEngine;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Server;
 using WebSocket4Net;
+using ErrorEventArgs = SuperSocket.ClientEngine.ErrorEventArgs;
+using WebSocket = WebSocket4Net.WebSocket;
 
 namespace Matterbridge
 {
@@ -20,9 +21,10 @@ namespace Matterbridge
         // ReSharper disable ConvertToAutoProperty
         private ICoreServerAPI Api => _api;
         private Mod Mod => _mod;
+
         private ModConfig Config => _config!;
         // ReSharper restore ConvertToAutoProperty
-        
+
         private WebSocket? _websocket;
         private bool _reconnectWebsocket = true;
         private int _connectErrrors = 0;
@@ -49,7 +51,8 @@ namespace Matterbridge
                 _websocket = new WebSocket(
                     uri: Config.Uri,
                     customHeaderItems: customHeaderItems
-                ) {
+                )
+                {
                     EnableAutoSendPing = true,
                     AutoSendPingInterval = 100
                 };
@@ -71,8 +74,7 @@ namespace Matterbridge
         {
             if (Config.SendApiConnectEvents && !skipMessage)
             {
-                SendMessage(
-                    username: "system",
+                SendSystemMessage(
                     text: Config.TEXT_ServerStop,
                     @event: ApiMessage.EventJoinLeave,
                     gateway: Config.generalGateway
@@ -83,7 +85,32 @@ namespace Matterbridge
             _websocket?.Close();
         }
 
-        public void SendMessage(string username, string text, string gateway, string @event = "", string account = "")
+        public void SendSystemMessage(string text, string gateway, string @event = "")
+        {
+            SendMessage(
+                username: _config.systemUsername,
+                text: text,
+                gateway: gateway,
+                @event: @event,
+                account: "",
+                avatar: _config.systemAvatar
+            );
+        }
+
+        public void SendUserMessage(IServerPlayer player, string text, string gateway, string @event = "")
+        {
+            SendMessage(
+                username: player.PlayerName,
+                text: text,
+                gateway: gateway,
+                @event: @event,
+                account: player.PlayerUID,
+                avatar: Identicon.GenerateUrl(player.PlayerUID)
+            );
+        }
+
+        private void SendMessage(string username, string text, string gateway, string @event, string account,
+            string avatar)
         {
             if (_websocket == null)
             {
@@ -96,8 +123,7 @@ namespace Matterbridge
                 gateway: gateway,
                 channel: "api",
                 username: username,
-                // TODO: render face and get url to it
-                avatar: "",
+                avatar: avatar,
                 @event: @event,
                 account: account,
                 protocol: "api"
@@ -166,8 +192,7 @@ namespace Matterbridge
 
                         if (Config.SendApiConnectEvents)
                         {
-                            SendMessage(
-                                username: "system",
+                            SendSystemMessage(
                                 text: Config.TEXT_ServerStart,
                                 gateway: Config.generalGateway,
                                 @event: ""
@@ -199,6 +224,18 @@ namespace Matterbridge
             }
 
             var cleanedMessageText = message.Text.Replace(">", "&gt;").Replace("<", "&lt;");
+
+            cleanedMessageText = string.Join(
+                " ",
+                cleanedMessageText
+                    .Split(new[] {' '}, StringSplitOptions.None)
+                    .Select(
+                        word => Uri.IsWellFormedUriString(word, UriKind.Absolute)
+                            ? $"<a href=\"{word}\">{word}</a>"
+                            : word
+                    )
+                    .ToArray()
+            );
 
             switch (message.Event)
             {

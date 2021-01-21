@@ -5,7 +5,7 @@
 		<Nullable>enable</Nullable>
 
 		<AssemblyTitle>Matterbridge API Connector</AssemblyTitle>
-		<Version>0.0.5</Version>
+		<Version>0.0.6</Version>
 
 		<Description>A matterbridge api connector for VS server</Description>
 		<Authors>NikkyAI</Authors>
@@ -52,16 +52,9 @@
 		</None>
 	</ItemGroup>
 
-	<ItemGroup>
-		<None Include=".generated\**\*.*">
-			<Link>%(RecursiveDir)%(Filename)%(Extension)</Link>
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-	</ItemGroup>
-
 	<Target Name="GenerateResource" BeforeTargets="BeforeBuild">
 		<Delete Files=".generated\**\*.*" />
-		<GenerateModinfo InputFilename="modinfo.json" OutputFilename=".generated/modinfo.json" Modid="$(AssemblyName)" Version="$(Version)" Description="$(Description)" Name="$(AssemblyTitle)" Author="$(Authors)" Website="$(WebPage)" />
+		<GenerateModinfo InputFilename="modinfo.json" OutputFilename="resources/modinfo.json" Modid="$(AssemblyName)" Version="$(Version)" Description="$(Description)" Name="$(AssemblyTitle)" Author="$(Authors)" Website="$(WebPage)" />
 		<Message Importance="High" Text="generated .generated/modinfo.json" />
 	</Target>
 

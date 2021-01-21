@@ -13,7 +13,9 @@ namespace Matterbridge
         public bool SendPlayerDeathEvents = true;
         public bool SendStormNotification = true;
         public bool SendStormEarlyNotification = true;
-        // public string Gateway = "";
+        
+        public string systemUsername = "system";
+        public string systemAvatar = "";
 
         public string generalGateway = "general";
         public List<ChannelMappingEntry> ChannelMapping = new List<ChannelMappingEntry>();

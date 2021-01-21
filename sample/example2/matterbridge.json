@@ -17,6 +17,11 @@
       "groupName": "twitch lunarlight",
       "gateway": "twitch_lunarlight",
       "isPrivate": false
+    },
+    {
+      "groupName": "twitch kainei",
+      "gateway": "twitch_kainei",
+      "isPrivate": false
     }
   ],
   "TEXT_StormEarlyWarning": "It appears a {strength} storm is coming...",
