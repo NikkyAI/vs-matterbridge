@@ -109,6 +109,18 @@ namespace Matterbridge
             );
         }
 
+        public void SendUserMessage(string playerName, string playerUid, string text, string gateway, string @event = "")
+        {
+            SendMessage(
+                username: playerName,
+                text: text,
+                gateway: gateway,
+                @event: @event,
+                account: playerUid,
+                avatar: Identicon.GenerateUrl(playerUid)
+            );
+        }
+
         private void SendMessage(string username, string text, string gateway, string @event, string account,
             string avatar)
         {

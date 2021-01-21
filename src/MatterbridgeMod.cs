@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
+using HarmonyLib;
 using Vintagestory.API.Common;
 using Vintagestory.API.Config;
 using Vintagestory.API.Server;
 using Vintagestory.GameContent;
 using Newtonsoft.Json;
+using Vintagestory.Server;
 
 namespace Matterbridge
 {
@@ -22,6 +24,7 @@ namespace Matterbridge
 
         private static ICoreServerAPI? _api;
         private static ModConfig? _config;
+        private static Mod? _mod;
         private static WebsocketHandler? _websocketHandler;
 
         // ReSharper disable ConvertToAutoProperty
@@ -47,8 +50,12 @@ namespace Matterbridge
 
         public override bool AllowRuntimeReload => true;
 
+        private const string harmonyId = "matterbridge.fix";
+        private Harmony harmony = new Harmony(harmonyId);
+
         public override void StartServerSide(ICoreServerAPI api)
         {
+            _mod = base.Mod;
             Api = api;
 
             LoadConfig();
@@ -80,18 +87,21 @@ namespace Matterbridge
             Api.Event.SaveGameLoaded += Event_SaveGameLoaded;
             Api.Event.PlayerChat += Event_PlayerChat;
 
-            Api.Event.PlayerJoin += Event_PlayerJoin;
+            Api.Event.PlayerNowPlaying += Event_PlayerNowPlaying;
             Api.Event.PlayerDisconnect += Event_PlayerDisconnect;
 
             Api.Event.ServerRunPhase(EnumServerRunPhase.GameReady, Event_ServerStartup);
             Api.Event.ServerRunPhase(EnumServerRunPhase.Shutdown, Event_ServerShutdown);
 
-            Api.Event.PlayerDeath += Event_PlayerDeath;
+            // Api.Event.PlayerDeath += Event_PlayerDeath;
+
+            harmony.PatchAll();
         }
 
         public override void Dispose()
         {
             WebsocketHandler.Dispose();
+            harmony.UnpatchAll(harmonyId);
             base.Dispose();
         }
 
@@ -269,75 +279,22 @@ namespace Matterbridge
             WebsocketHandler.Connect();
         }
 
-        private void Event_PlayerDeath(IServerPlayer byPlayer, DamageSource? damageSource)
-        {
-            // var deathMessage = (byPlayer?.PlayerName ?? "Unknown player") + " ";
-            var deathMessage = "";
-            if (damageSource == null)
-                deathMessage += "was killed by the unknown.";
-            else
-            {
-                deathMessage += damageSource.Type switch
-                {
-                    EnumDamageType.Gravity => "smashed into the ground",
-                    EnumDamageType.Fire => "burned to death",
-                    EnumDamageType.Crushing => "was crushed",
-                    EnumDamageType.BluntAttack => "was crushed",
-                    EnumDamageType.SlashingAttack => "was sliced open",
-                    EnumDamageType.PiercingAttack => "was pierced through",
-                    EnumDamageType.Suffocation => "suffocated to death",
-                    EnumDamageType.Heal => "was somehow *healed* to death",
-                    EnumDamageType.Poison => "was poisoned",
-                    EnumDamageType.Hunger => "starved to death",
-                    EnumDamageType.Frost => "froze to death",
-                    _ => "was killed"
-                };
-
-                deathMessage += " ";
-
-                deathMessage += damageSource.Source switch
-                {
-                    EnumDamageSource.Block => "by a block.",
-                    EnumDamageSource.Player => "when they failed at PVP.",
-                    EnumDamageSource.Fall => "when they fell to their doom.",
-                    EnumDamageSource.Drown => "when they tried to breath in water.",
-                    EnumDamageSource.Revive => "just as they respawned.",
-                    EnumDamageSource.Void => "when they fell screaming into the abyss.",
-                    EnumDamageSource.Suicide => "when they killed themselves.",
-                    EnumDamageSource.Internal => "when they took damage from the inside...",
-                    EnumDamageSource.Entity => damageSource.SourceEntity.Code.Path switch
-                    {
-                        "wolf-male" => "and eaten by a wolf.",
-                        "wolf-female" => "and eaten by a wolf.",
-                        "pig-wild-male" => "by a boar.",
-                        "pig-wild-female" => "by a sow.",
-                        "sheep-bighorn-female" => "by a sheep.",
-                        "sheep-bighorn-male" => "by a sheep.",
-                        "chicken-rooster" => "by a... chicken.",
-                        "locust" => "by a locust.",
-                        "drifter" => "by a drifter.",
-                        "beemob" => "by a swarm of bees.",
-                        _ => $"by a monster. ({damageSource.SourceEntity.Code.Path})" // TODO: add section to config
-                    },
-                    EnumDamageSource.Explosion => "when they stood by a bomb.",
-                    EnumDamageSource.Machine => "when they got their hands stuck in a machine.",
-                    EnumDamageSource.Unknown => "when they encountered the unknown.",
-                    EnumDamageSource.Weather => "when the weather itself suddenly struck.",
-                    _ => "by the unknown."
-                };
-            }
-
-            if (Config.SendPlayerDeathEvents)
-            {
-                WebsocketHandler.SendUserMessage(
-                    player: byPlayer,
-                    text: deathMessage,
-                    @event: ApiMessage.EventUserAction,
-                    // account: byPlayer.PlayerUID,
-                    gateway: Config.generalGateway
-                );
-            }
-        }
+        // private void Event_PlayerDeath(IServerPlayer player, DamageSource? deathReason)
+        // {
+        //     if (Config.SendPlayerDeathEvents)
+        //     {
+        //         string deathMessage = this.GetDeathMessage(player, deathReason);
+        //         deathMessage = deathMessage.Replace($"Player {player.PlayerName}", "");
+        //         
+        //         WebsocketHandler.SendUserMessage(
+        //             player: player,
+        //             text: deathMessage,
+        //             @event: ApiMessage.EventUserAction,
+        //             // account: byPlayer.PlayerUID,
+        //             gateway: Config.generalGateway
+        //         );
+        //     }
+        // }
 
         private void Event_ServerStartup()
         {
@@ -374,8 +331,7 @@ namespace Matterbridge
                 {
                     totalPlaytime = TimeSpan.Zero;
                 }
-                data.CustomPlayerData[PLAYERDATA_TOTALPLAYTIMEKEY] = 
-                    (timePlayed + totalPlaytime).ToString();
+                data.CustomPlayerData[PLAYERDATA_TOTALPLAYTIMEKEY] = (timePlayed + totalPlaytime).ToString();
 
                 data.CustomPlayerData[PLAYERDATA_TOTALPLAYTIMEKEY] = timePlayed.ToString();
             }
@@ -395,7 +351,7 @@ namespace Matterbridge
             }
         }
 
-        private void Event_PlayerJoin(IServerPlayer byPlayer)
+        private void Event_PlayerNowPlaying(IServerPlayer byPlayer)
         {
             if (ConnectTimeDict.ContainsKey(byPlayer.PlayerUID))
             {
@@ -505,6 +461,30 @@ namespace Matterbridge
                 text: foundText.Groups[1].Value,
                 gateway: gateway
             );
+        }
+        
+        [HarmonyPatch(typeof(ServerSystemEntitySimulation), "GetDeathMessage")]
+        class GetDeathMessagePatch
+        {
+            static void Postfix(
+                ConnectedClient client, 
+                DamageSource src,
+                ref string __result
+            )
+            {
+                if (Config.SendPlayerDeathEvents)
+                {
+                    string deathMessage = __result.Replace($"Player {client.PlayerName} ", "");
+                
+                    WebsocketHandler.SendUserMessage(
+                        playerName: client.PlayerName,
+                        playerUid: client.SentPlayerUid,
+                        text: deathMessage,
+                        @event: ApiMessage.EventUserAction,
+                        gateway: Config.generalGateway
+                    );
+                }
+            }
         }
     }
 }
