@@ -32,12 +32,14 @@ namespace Matterbridge
         public readonly string groupName;
         public readonly string gateway;
         public readonly bool isPrivate;
+        public readonly bool skipStormWarning;
 
-        public ChannelMappingEntry(string groupName, string gateway, bool isPrivate)
+        public ChannelMappingEntry(string groupName, string gateway, bool isPrivate, bool skipStormWarning)
         {
             this.groupName = groupName;
             this.gateway = gateway;
             this.isPrivate = isPrivate;
+            this.skipStormWarning = skipStormWarning;
         }
     }
 }

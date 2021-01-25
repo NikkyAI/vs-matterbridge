@@ -180,8 +180,8 @@ namespace Matterbridge
             }
 
             WebsocketHandler.SendUserMessage(
-                player: player, 
-                text: message, 
+                player: player,
+                text: message,
                 gateway: gateway,
                 @event: ApiMessage.EventUserAction
             );
@@ -258,7 +258,7 @@ namespace Matterbridge
                 case "version":
                 {
                     player.SendMessage(
-                        groupid, 
+                        groupid,
                         $"{Mod.Info.Name} version {Mod.Info.Version}",
                         EnumChatType.Notification
                     );
@@ -266,7 +266,9 @@ namespace Matterbridge
                 }
                 default:
                 {
-                    player.SendMessage(groupid, $"unknown subcommand {arg0}\n available: join|leave|list|listall|version", EnumChatType.Notification);
+                    player.SendMessage(groupid,
+                        $"unknown subcommand {arg0}\n available: join|leave|list|listall|version",
+                        EnumChatType.Notification);
                     break;
                 }
             }
@@ -331,6 +333,7 @@ namespace Matterbridge
                 {
                     totalPlaytime = TimeSpan.Zero;
                 }
+
                 data.CustomPlayerData[PLAYERDATA_TOTALPLAYTIMEKEY] = (timePlayed + totalPlaytime).ToString();
 
                 data.CustomPlayerData[PLAYERDATA_TOTALPLAYTIMEKEY] = timePlayed.ToString();
@@ -357,6 +360,7 @@ namespace Matterbridge
             {
                 ConnectTimeDict.Remove(byPlayer.PlayerUID);
             }
+
             ConnectTimeDict.Add(byPlayer.PlayerUID, DateTime.UtcNow);
 
             // this forces autojoin groups
@@ -399,33 +403,53 @@ namespace Matterbridge
 
             var data = _temporalSystem.StormData;
 
+            string? messageText = null;
+
             if (_lastData?.stormDayNotify > 1 && data.stormDayNotify == 1 && Config.SendStormEarlyNotification)
             {
-                WebsocketHandler.SendSystemMessage(
-                    text: Config.TEXT_StormEarlyWarning.Replace("{strength}",
-                        data.nextStormStrength.ToString().ToLower()),
-                    gateway: Config.generalGateway
+                messageText = Config.TEXT_StormEarlyWarning.Replace(
+                    "{strength}", data.nextStormStrength.ToString().ToLower()
                 );
             }
 
             if (_lastData?.stormDayNotify == 1 && data.stormDayNotify == 0)
             {
-                WebsocketHandler.SendSystemMessage(
-                    text: Config.TEXT_StormBegin.Replace("{strength}", data.nextStormStrength.ToString().ToLower()),
-                    gateway: Config.generalGateway
+                messageText = Config.TEXT_StormBegin.Replace(
+                    "{strength}", data.nextStormStrength.ToString().ToLower()
                 );
             }
 
             //double activeDaysLeft = data.stormActiveTotalDays - api.World.Calendar.TotalDays;
             if (_lastData?.stormDayNotify == 0 && data.stormDayNotify != 0)
             {
-                WebsocketHandler.SendSystemMessage(
-                    text: Config.TEXT_StormEnd.Replace("{strength}", data.nextStormStrength.ToString().ToLower()),
-                    gateway: Config.generalGateway
+                messageText = Config.TEXT_StormEnd.Replace(
+                    "{strength}", data.nextStormStrength.ToString().ToLower()
                 );
             }
 
             _lastData = JsonConvert.DeserializeObject<TemporalStormRunTimeData>(JsonConvert.SerializeObject(data));
+
+            if (messageText != null)
+            {
+                WebsocketHandler.SendSystemMessage(
+                    text: messageText,
+                    gateway: Config.generalGateway
+                );
+                foreach (var mappingEntry in Config.ChannelMapping)
+                {
+                    if (mappingEntry.skipStormWarning) continue;
+                    var group = Api.Groups.GetOrCreate(Api, mappingEntry.groupName);
+                    Api.SendMessageToGroup(
+                        @group.Uid,
+                        messageText,
+                        EnumChatType.OthersMessage
+                    );
+                    WebsocketHandler.SendSystemMessage(
+                        text: messageText,
+                        gateway: mappingEntry.gateway
+                    );
+                }
+            }
         }
 
         private void Event_PlayerChat(IServerPlayer byPlayer, int channelId, ref string message, ref string data,
@@ -443,7 +467,15 @@ namespace Matterbridge
                 Mod.Logger.Debug($"group: {group.Uid} {group.Name}");
 
                 // look up gateway for group name
-                gateway = Config.ChannelMapping.First(entry => entry.groupName == group.Name).gateway;
+                var firstItem = Config.ChannelMapping.FirstOrDefault(entry => entry.groupName == group.Name);
+                if (firstItem != null)
+                {
+                    gateway = firstItem?.gateway;
+                }
+                else
+                {
+                    return;
+                }
             }
 
             Mod.Logger.Debug("chat: {0}", message);
@@ -462,12 +494,12 @@ namespace Matterbridge
                 gateway: gateway
             );
         }
-        
+
         [HarmonyPatch(typeof(ServerSystemEntitySimulation), "GetDeathMessage")]
         class GetDeathMessagePatch
         {
             static void Postfix(
-                ConnectedClient client, 
+                ConnectedClient client,
                 DamageSource src,
                 ref string __result
             )
@@ -475,7 +507,7 @@ namespace Matterbridge
                 if (Config.SendPlayerDeathEvents)
                 {
                     string deathMessage = __result.Replace($"Player {client.PlayerName} ", "");
-                
+
                     WebsocketHandler.SendUserMessage(
                         playerName: client.PlayerName,
                         playerUid: client.SentPlayerUid,
