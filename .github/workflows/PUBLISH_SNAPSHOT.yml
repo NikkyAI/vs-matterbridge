@@ -43,7 +43,7 @@ jobs:
           tag: ${{ env.RELEASE_TAG }}
           commitish: ${{ env.GITHUB_SHA }}
           name: ${{ env.VERSION }}
-          prerelease: true
+          prerelease: false
           body: Snapshot Release ${{ env.VERSION }}
           gzip: folders
           files: >

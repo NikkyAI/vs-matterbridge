@@ -7,13 +7,23 @@
   "SendStormNotification": true,
   "SendStormEarlyNotification": true,
   "generalGateway": "general",
+  "generalGeneratedAvatars": false,
   "systemUsername": "system",
   "systemAvatar": "",
   "ChannelMapping": [
     {
       "groupName": "twitch copygirl",
       "gateway": "twitch_copygirl",
-      "isPrivate": false
+      "isPrivate": false,
+      "skipStormWarning": false,
+      "generatedAvatars": false
+    },
+    {
+      "groupName": "twitch kainei",
+      "gateway": "twitch_kainei",
+      "isPrivate": false,
+      "skipStormWarning": false,
+      "generatedAvatars": false
     }
   ],
   "TEXT_StormEarlyWarning": "It appears a {strength} storm is coming...",

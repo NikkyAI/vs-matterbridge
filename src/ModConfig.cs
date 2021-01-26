@@ -18,6 +18,7 @@ namespace Matterbridge
         public string systemAvatar = "";
 
         public string generalGateway = "general";
+        public bool generalGeneratedAvatars = false;
         public List<ChannelMappingEntry> ChannelMapping = new List<ChannelMappingEntry>();
 
         public string TEXT_StormEarlyWarning { get; set; } = "It appears a {strength} storm is coming...";
@@ -33,13 +34,15 @@ namespace Matterbridge
         public readonly string gateway;
         public readonly bool isPrivate;
         public readonly bool skipStormWarning;
+        public readonly bool generatedAvatars;
 
-        public ChannelMappingEntry(string groupName, string gateway, bool isPrivate, bool skipStormWarning)
+        public ChannelMappingEntry(string groupName, string gateway, bool isPrivate, bool skipStormWarning, bool generatedAvatars)
         {
             this.groupName = groupName;
             this.gateway = gateway;
             this.isPrivate = isPrivate;
             this.skipStormWarning = skipStormWarning;
+            this.generatedAvatars = generatedAvatars;
         }
     }
 }

@@ -97,7 +97,7 @@ namespace Matterbridge
             );
         }
 
-        public void SendUserMessage(IServerPlayer player, string text, string gateway, string @event = "")
+        public void SendUserMessage(IServerPlayer player, string text, string gateway, bool generateAvatar, string @event = "")
         {
             SendMessage(
                 username: player.PlayerName,
@@ -105,11 +105,11 @@ namespace Matterbridge
                 gateway: gateway,
                 @event: @event,
                 account: player.PlayerUID,
-                avatar: Identicon.GenerateUrl(player.PlayerUID)
+                avatar: generateAvatar ? Identicon.GenerateUrl(player.PlayerUID) : ""
             );
         }
 
-        public void SendUserMessage(string playerName, string playerUid, string text, string gateway, string @event = "")
+        public void SendUserMessage(string playerName, string playerUid, string text, string gateway, bool generateAvatar, string @event = "")
         {
             SendMessage(
                 username: playerName,
@@ -117,7 +117,7 @@ namespace Matterbridge
                 gateway: gateway,
                 @event: @event,
                 account: playerUid,
-                avatar: Identicon.GenerateUrl(playerUid)
+                avatar: generateAvatar ? Identicon.GenerateUrl(playerUid) : ""
             );
         }
 

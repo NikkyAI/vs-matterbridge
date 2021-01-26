@@ -162,9 +162,11 @@ namespace Matterbridge
             );
 
             string gateway;
+            bool generateAvatar = false;
             if (groupid == GlobalConstants.GeneralChatGroup)
             {
                 gateway = Config.generalGateway;
+                generateAvatar = Config.generalGeneratedAvatars;
             }
             else
             {
@@ -177,12 +179,14 @@ namespace Matterbridge
                 }
 
                 gateway = entry.gateway;
+                generateAvatar = entry.generatedAvatars;
             }
 
             WebsocketHandler.SendUserMessage(
                 player: player,
                 text: message,
                 gateway: gateway,
+                generateAvatar: generateAvatar,
                 @event: ApiMessage.EventUserAction
             );
         }
@@ -339,7 +343,7 @@ namespace Matterbridge
                 data.CustomPlayerData[PLAYERDATA_TOTALPLAYTIMEKEY] = timePlayed.ToString();
             }
 
-            var removed = ConnectTimeDict.Remove(byPlayer.PlayerUID);
+            ConnectTimeDict.Remove(byPlayer.PlayerUID);
             Mod.Logger.Debug("ConnectTimeDict.remove(\"{0}\")", byPlayer.PlayerUID);
 
             if (Config.SendPlayerJoinLeaveEvents)
@@ -456,9 +460,11 @@ namespace Matterbridge
             Vintagestory.API.Datastructures.BoolRef consumed)
         {
             string gateway;
+            bool generateAvatar;
             if (channelId == GlobalConstants.GeneralChatGroup)
             {
                 gateway = Config.generalGateway;
+                generateAvatar = Config.generalGeneratedAvatars;
             }
             else
             {
@@ -470,7 +476,8 @@ namespace Matterbridge
                 var firstItem = Config.ChannelMapping.FirstOrDefault(entry => entry.groupName == group.Name);
                 if (firstItem != null)
                 {
-                    gateway = firstItem?.gateway;
+                    gateway = firstItem!.gateway;
+                    generateAvatar = firstItem!.generatedAvatars;
                 }
                 else
                 {
@@ -491,7 +498,8 @@ namespace Matterbridge
             WebsocketHandler.SendUserMessage(
                 player: byPlayer,
                 text: foundText.Groups[1].Value,
-                gateway: gateway
+                gateway: gateway,
+                generateAvatar: generateAvatar
             );
         }
 
@@ -512,6 +520,7 @@ namespace Matterbridge
                         playerName: client.PlayerName,
                         playerUid: client.SentPlayerUid,
                         text: deathMessage,
+                        generateAvatar: Config.generalGeneratedAvatars,
                         @event: ApiMessage.EventUserAction,
                         gateway: Config.generalGateway
                     );

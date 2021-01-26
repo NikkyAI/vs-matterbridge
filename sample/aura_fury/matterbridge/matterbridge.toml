@@ -33,6 +33,8 @@ Label="discord.aurafury"
 # See the [general] config section for default options
 RemoteNickFormat="{NICK}"
 
+UseLocalAvatar=["api", "irc"]
+
 ShowJoinPart = true
 
 ###################################################################
@@ -108,4 +110,16 @@ enable=true
     [[gateway.in]]
     account="irc.twitch"
     channel="#copygirl"
+
+[[gateway]]
+name="twitch_kainei"
+enable=true
+
+    [[gateway.out]]
+    account="api.vintagestory"
+    channel="api"
+
+    [[gateway.in]]
+    account="irc.twitch"
+    channel="#kainei"
 
