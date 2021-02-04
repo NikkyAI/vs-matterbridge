@@ -74,11 +74,15 @@ namespace Matterbridge
         {
             if (Config.SendApiConnectEvents && !skipMessage)
             {
-                SendSystemMessage(
-                    text: Config.TEXT_ServerStop,
-                    @event: ApiMessage.EventJoinLeave,
-                    gateway: Config.generalGateway
-                );
+
+                Api.Event.EnqueueMainThreadTask(() =>
+                {
+                    SendSystemMessage(
+                        text: Config.TEXT_ServerStop,
+                        @event: ApiMessage.EventJoinLeave,
+                        gateway: Config.generalGateway
+                    );
+                }, "vs-matterbridge");
             }
 
             _reconnectWebsocket = false;
@@ -97,7 +101,8 @@ namespace Matterbridge
             );
         }
 
-        public void SendUserMessage(IServerPlayer player, string text, string gateway, bool generateAvatar, string @event = "")
+        public void SendUserMessage(IServerPlayer player, string text, string gateway, bool generateAvatar,
+            string @event = "")
         {
             SendMessage(
                 username: player.PlayerName,
@@ -109,7 +114,8 @@ namespace Matterbridge
             );
         }
 
-        public void SendUserMessage(string playerName, string playerUid, string text, string gateway, bool generateAvatar, string @event = "")
+        public void SendUserMessage(string playerName, string playerUid, string text, string gateway,
+            bool generateAvatar, string @event = "")
         {
             SendMessage(
                 username: playerName,
@@ -249,33 +255,48 @@ namespace Matterbridge
                     .ToArray()
             );
 
+            if (groupUid == null)
+            {
+                Mod.Logger.Error("groupId was null");
+                return;
+            }
+
             switch (message.Event)
             {
                 case ApiMessage.EventJoinLeave:
                 {
-                    Api.SendMessageToGroup(
-                        groupUid,
-                        $"<strong>{message.Username}</strong>: {cleanedMessageText}",
-                        EnumChatType.OthersMessage
-                    );
+                    Api.Event.EnqueueMainThreadTask(() =>
+                    {
+                        Api.SendMessageToGroup(
+                            groupUid,
+                            $"<strong>{message.Username}</strong>: {cleanedMessageText}",
+                            EnumChatType.OthersMessage
+                        );
+                    }, "vs-matterbridge");
                     break;
                 }
                 case ApiMessage.EventUserAction:
                 {
-                    Api.SendMessageToGroup(
-                        groupUid,
-                        $"<strong>{message.Username}</strong> <i>{cleanedMessageText}</i>",
-                        EnumChatType.OthersMessage
-                    );
+                    Api.Event.EnqueueMainThreadTask(() =>
+                    {
+                        Api.SendMessageToGroup(
+                            groupUid,
+                            $"<strong>{message.Username}</strong> <i>{cleanedMessageText}</i>",
+                            EnumChatType.OthersMessage
+                        );
+                    }, "vs-matterbridge");
                     break;
                 }
                 case "":
                 {
-                    Api.SendMessageToGroup(
-                        groupUid,
-                        $"<strong>{message.Username}</strong>: {cleanedMessageText}",
-                        EnumChatType.OthersMessage
-                    );
+                    Api.Event.EnqueueMainThreadTask(() =>
+                    {
+                        Api.SendMessageToGroup(
+                            groupUid,
+                            $"<strong>{message.Username}</strong>: {cleanedMessageText}",
+                            EnumChatType.OthersMessage
+                        );
+                    }, "vs-matterbridge");
                     break;
                 }
                 default:
